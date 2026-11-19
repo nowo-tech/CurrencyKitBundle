@@ -1,0 +1,41 @@
+{
+    "name": "nowo-tech/currency-kit-bundle",
+    "description": "Reference-rate currency conversion for Symfony: ECB euro reference rates stored by date, decimal-string money, manual rates, console sync, Scheduler bridge and a Twig filter.",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "keywords": [
+        "php",
+        "symfony",
+        "symfony-bundle",
+        "currency",
+        "exchange-rates",
+        "reference-rates",
+        "ecb",
+        "money",
+        "nowo",
+        "frankenphp"
+    ],
+    "homepage": "https://github.com/nowo-tech/CurrencyKitBundle",
+    "authors": [
+        {
+            "name": "Héctor Franco Aceituno",
+            "email": "hectorfranco@nowo.tech",
+            "homepage": "https://github.com/HecFranco",
+            "role": "Developer"
+        },
+        {
+            "name": "Nowo.tech",
+            "homepage": "https://nowo.tech"
+        }
+    ],
+    "require": {
+        "php": ">=8.2 <8.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "Nowo\\CurrencyKitBundle\\": "src/"
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
