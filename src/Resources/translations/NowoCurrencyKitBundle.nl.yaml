@@ -1,0 +1,6 @@
+# Currency kit Twig output (nl). Plain text: Twig escapes it.
+twig:
+    reference_money: '≈ %amount% (referentiekoers %source% %date%)'
+    stale: '(verouderd)'
+    no_reference_rate: '(geen referentiekoers)'
+    reference_note: 'Referentiekoersen, alleen ter informatie; niet voor betalingen of boekhouding.'

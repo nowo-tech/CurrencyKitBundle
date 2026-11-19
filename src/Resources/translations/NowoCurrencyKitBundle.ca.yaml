@@ -1,0 +1,6 @@
+# Currency kit Twig output (ca). Plain text: Twig escapes it.
+twig:
+    reference_money: '≈ %amount% (tipus de referència %source% %date%)'
+    stale: '(desactualitzat)'
+    no_reference_rate: '(sense tipus de referència)'
+    reference_note: 'Tipus de canvi de referència, només a títol informatiu; no vàlids per a pagaments ni comptabilitat.'

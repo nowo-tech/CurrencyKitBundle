@@ -1,0 +1,6 @@
+# Currency kit Twig output (eu). Plain text: Twig escapes it.
+twig:
+    reference_money: '≈ %amount% (erreferentzia-tasa %source% %date%)'
+    stale: '(zaharkituta)'
+    no_reference_rate: '(erreferentzia-tasarik ez)'
+    reference_note: 'Erreferentziazko kanbio-tasak, informazio gisa soilik; ez dira ordainketetarako ezta kontabilitaterako.'
