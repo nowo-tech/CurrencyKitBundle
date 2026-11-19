@@ -1,0 +1,6 @@
+# Currency Kit: reference rates only (not for payments or accounting). See docs/CONFIGURATION.md.
+nowo_currency_kit:
+    outbound:
+        enabled: '%env(bool:CURRENCY_KIT_OUTBOUND)%'   # 0 on air-gapped installs (import ECB files instead)
+    # scheduler:
+    #     enabled: true    # needs symfony/scheduler + dragonmantank/cron-expression; consume scheduler_nowo_currency_kit

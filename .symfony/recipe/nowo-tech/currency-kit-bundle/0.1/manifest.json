@@ -1,0 +1,12 @@
+{
+    "bundles": {
+        "Nowo\\OutboundUrlGuardBundle\\NowoOutboundUrlGuardBundle": ["all"],
+        "Nowo\\CurrencyKitBundle\\NowoCurrencyKitBundle": ["all"]
+    },
+    "copy-from-recipe": {
+        "config/": "%CONFIG_DIR%/"
+    },
+    "env": {
+        "CURRENCY_KIT_OUTBOUND": "1"
+    }
+}

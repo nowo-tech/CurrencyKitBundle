@@ -1,0 +1,3 @@
+  * Create the tables: <info>php bin/console doctrine:migrations:diff</> (or the DDL in docs/UPGRADING.md)
+  * Load the last 90 days: <info>php bin/console nowo:currency-kit:rates:sync</>
+  * Keep them current: enable <comment>nowo_currency_kit.scheduler</> or add the cron lines of docs/USAGE.md
