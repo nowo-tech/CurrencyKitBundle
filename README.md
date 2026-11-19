@@ -1,14 +1,11 @@
-# Currency Kit Bundle
+# CurrencyKitBundle
 
-**Reference-rate currency conversion for Symfony.** Converts amounts between currencies at reference rates (the
-euro reference rates of the European Central Bank by default), stored by date in the application database, with the
-rate, its date and its source carried along with every result.
+Currency conversion at **reference rates** for Symfony: ECB euro reference rates stored by date, cross rates through the euro, decimal-string amounts, manual rates, a console sync with a Scheduler bridge, and a Twig filter.
 
-> Reference rates are published for information purposes only. This bundle is not a payment, settlement or
-> accounting rate source.
+Reference rates are for information only. They are not a source for payment or accounting rates.
 
-> 🚧 **Status: under construction (0.1.0 in progress).** Not released yet.
+> Work in progress: the first release (0.1.0) is under development. See `docs/` once it lands.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
