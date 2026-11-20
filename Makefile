@@ -9,7 +9,7 @@ COMPOSE_BIN := $(shell $(DOCKER_BIN) compose version >/dev/null 2>&1 && echo "$(
 COMPOSE     := $(COMPOSE_BIN) -f $(COMPOSE_FILE)
 SERVICE_PHP := php
 
-.PHONY: help up down down-dev build shell install ensure-up test test-coverage test-coverage-100 coverage-check validate-phpdoc cs-check cs-fix qa clean release-check composer-sync rector rector-dry phpstan igor update validate assets setup-hooks check-no-cursor-coauthor check-open-prs validate-translations db-up test-with-db test-coverage-with-db update-deps
+.PHONY: help up down down-dev build shell install ensure-up test test-coverage test-coverage-100 coverage-check validate-phpdoc cs-check cs-fix qa clean release-check composer-sync rector rector-dry phpstan igor update validate assets setup-hooks check-no-cursor-coauthor check-open-prs validate-translations db-up test-with-db test-coverage-with-db update-deps strip-cursor-coauthor-from-history
 
 help:
 	@echo "Currency Kit Bundle - Development Commands"
@@ -56,6 +56,7 @@ help:
 	@echo "  validate-translations  YAML syntax + key parity of the 7 locales (REQ-MAKE-004 / REQ-I18N-002)"
 	@echo "  check-open-prs         Fail if unresolved open GitHub PRs remain (REQ-REL-003)"
 	@echo "  setup-hooks            Install git hooks (REQ-GIT-001)"
+	@echo "  strip-cursor-coauthor-from-history  Rewrite history to drop agent co-author trailers (REQ-GIT-001, last resort)"
 	@echo ""
 	@echo ""
 
@@ -209,3 +210,6 @@ check-open-prs:
 	@chmod +x .scripts/check-open-prs.sh
 	@bash .scripts/check-open-prs.sh
 
+strip-cursor-coauthor-from-history:
+	@chmod +x .scripts/strip-cursor-coauthor-from-history.sh
+	@./.scripts/strip-cursor-coauthor-from-history.sh main
