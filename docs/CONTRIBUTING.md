@@ -7,6 +7,7 @@
 - [Code style](#code-style)
 - [Tests](#tests)
 - [Pull requests](#pull-requests)
+- [Cursor Agent](#cursor-agent)
 - [Git hooks (REQ-GIT-001)](#git-hooks-req-git-001)
 
 ## Code of Conduct
@@ -46,6 +47,28 @@ expected to uphold it. Please report unacceptable behavior to **hectorfranco@now
 - Ensure `make release-check` passes.
 - Keep `docs/CHANGELOG.md` (`[Unreleased]`) and the docs updated when behaviour or configuration changes.
 
+## Cursor Agent
+
+Two user-level Cursor settings keep the agent chat from sending half-written prompts (REQ-IDE-006):
+
+1. **Submit with Ctrl + Enter** (macOS: **⌘ + Enter**): Cursor Settings → Agents / Chat → Submit with Ctrl + Enter.
+   Enter then inserts a newline; Ctrl/⌘+Enter submits the prompt.
+2. **Queue follow-ups while the agent is running**: in your user `settings.json` (Linux
+   `~/.config/Cursor/User/settings.json`, Windows `%APPDATA%\Cursor\User\settings.json`, macOS
+   `~/Library/Application Support/Cursor/User/settings.json`):
+
+```json
+{
+  "cursor.composer.queueMessageDefaultBehavior": "queue"
+}
+```
+
+   With `queue` the next message waits until the current turn ends; do not use `steer` as the default, because it
+   interrupts the running agent as soon as a follow-up is sent.
+
+The repository ships its agent setup in `.cursor/` (rules, the Engram MCP entry and the Spec Kit skills); see
+[ENGRAM.md](ENGRAM.md) and [SPEC-KIT.md](SPEC-KIT.md).
+
 ## Git hooks (REQ-GIT-001)
 
 Do **not** add `Co-authored-by: Cursor` or `cursoragent@cursor.com` trailers, nor `Co-Authored-By: Claude …` /
@@ -55,3 +78,6 @@ Do **not** add `Co-authored-by: Cursor` or `cursoragent@cursor.com` trailers, no
 make setup-hooks
 make check-no-cursor-coauthor
 ```
+
+If trailers were already pushed, `make strip-cursor-coauthor-from-history` rewrites the history (last resort, then a
+force-push needs the owner).

@@ -4,6 +4,7 @@
 
 - [Require the package](#require-the-package)
 - [Register the bundles](#register-the-bundles)
+- [Flex recipe](#flex-recipe)
 - [Supported databases](#supported-databases)
 - [Create the tables](#create-the-tables)
 - [First sync](#first-sync)
@@ -30,6 +31,13 @@ return [
 
 No configuration is needed for the defaults (ECB source, default entity manager's connection, `nowo_` table prefix).
 See [CONFIGURATION.md](CONFIGURATION.md).
+
+## Flex recipe
+
+The package ships a Symfony Flex recipe in `.symfony/recipe/nowo-tech/currency-kit-bundle/0.1/`: `manifest.json`
+registers the bundle (and OutboundUrlGuardBundle), copies the starter configuration from `config/packages/` into your
+`config/` directory and sets the `CURRENCY_KIT_OUTBOUND` environment variable (`1`); `post-install.txt` prints the next
+steps. The recipe is for the Flex recipe repository; without it, register the bundles by hand as above.
 
 ## Supported databases
 
