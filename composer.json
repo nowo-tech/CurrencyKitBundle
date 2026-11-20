@@ -49,7 +49,7 @@
         "doctrine/persistence": "^3.4 || ^4.0",
         "nowo-tech/outbound-url-guard-bundle": "^1.5",
         "nowo-tech/transaction-contract": "^1.0",
-        "nowo-tech/transaction-doctrine": "^1.7",
+        "nowo-tech/transaction-doctrine": "^1.8",
         "psr/cache": "^2.0 || ^3.0",
         "psr/clock": "^1.0",
         "psr/event-dispatcher": "^1.0",
