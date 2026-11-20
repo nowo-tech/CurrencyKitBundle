@@ -65,7 +65,6 @@ use Nowo\CurrencyKitBundle\Infrastructure\Symfony\Command\RatesSyncCommand;
 use Nowo\CurrencyKitBundle\Infrastructure\Symfony\Command\SchemaCheckCommand;
 use Nowo\CurrencyKitBundle\Infrastructure\Symfony\EventListener\RateMemoResetListener;
 use Nowo\CurrencyKitBundle\Infrastructure\Symfony\Messenger\SyncReferenceRatesHandler;
-use Nowo\CurrencyKitBundle\Infrastructure\Symfony\Messenger\SyncReferenceRatesMessage;
 use Nowo\CurrencyKitBundle\Infrastructure\Symfony\Security\CurrencyKitGuard;
 use Nowo\CurrencyKitBundle\Infrastructure\Symfony\Security\SecurityActorResolver;
 use Nowo\TransactionDoctrine\DoctrineTransactionRunner;
@@ -239,7 +238,8 @@ final class ServiceDefinitions
         if (class_exists(AsMessageHandler::class)) {
             $container->setDefinition(SyncReferenceRatesHandler::class, (new Definition(SyncReferenceRatesHandler::class))
                 ->setArguments([new Reference(RateSynchronizerInterface::class), new Reference(CurrencyKitSettings::class), new Reference(self::P . 'logger')])
-                ->addTag('messenger.message_handler', ['handles' => SyncReferenceRatesMessage::class]));
+                // #[AsMessageHandler] on the class: FrameworkBundle's autoconfiguration adds the Messenger tag (REQ-MSG-001).
+                ->setAutoconfigured(true));
         }
         if (!$scheduler) {
             return;

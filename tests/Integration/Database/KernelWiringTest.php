@@ -38,6 +38,16 @@ use function putenv;
  */
 final class KernelWiringTest extends KernelTestCase
 {
+    public function testSyncHandlerIsRegisteredExactlyOnceViaAttribute(): void
+    {
+        $container = $this->boot([], ['messenger' => true, 'transaction_doctrine' => true]);
+        $bus       = $container->get('messenger.default_bus');
+        self::assertInstanceOf(MessageBusInterface::class, $bus);
+        $stamps = $bus->dispatch(new SyncReferenceRatesMessage())->all(HandledStamp::class);
+        self::assertCount(1, $stamps);
+        self::assertStringContainsString('SyncReferenceRatesHandler', $stamps[0]->getHandlerName());
+    }
+
     public function testStandardHostWithEverything(): void
     {
         $container = $this->boot(['cache' => ['pool' => 'cache.app'], 'scheduler' => ['enabled' => true]], ['twig' => true, 'security' => true, 'transaction_doctrine' => true, 'messenger' => true, 'scheduler' => true]);
