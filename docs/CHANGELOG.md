@@ -1,0 +1,38 @@
+# Changelog
+
+All notable changes to this project are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+
+- 0.1.0 core (contract S1, [docs/CONTRACT.md](CONTRACT.md); owner answers QC-1…15, Beacon answers QB-1…8).
+- Domain: decimal-string `Money` (≤ 18 integer + 12 fraction digits) on `brick/math`, `CurrencyCode` with the bundled
+  ISO 4217 table (current list of 2026-09-17 and historic codes withdrawn since 1999; precious metals, SDR and test
+  codes and the units of account XEU, XFO, XFU, XRE, XAD refused), `RateDate`, `ConvertedAmount` (rounded and exact amount, rate, dates, source, stale flag, manual
+  rate id, legs), rounding modes, events and coded exceptions (`CURRENCY_001`…`013`, `ACCESS_002`).
+- Storage: five bundle tables (`<prefix>currency_rate_publication`, `currency_rate`, `currency_rate_change`,
+  `currency_manual_rate`, `currency_sync_lock`) mapped read-only (XML or attributes) on the configured manager and
+  written through DBAL; binary NO PAD identifier columns on MySQL / MariaDB; `nowo:currency-kit:schema-check`.
+- Sources: ECB daily / 90-day / full-history XML (streaming, hardened parser), Frankfurter-compatible JSON API
+  (off by default), manual-rate source; ECB XML and CSV import for air-gapped installs; every call through
+  OutboundUrlGuardBundle with no redirects, timeouts, size caps and an identifying User-Agent.
+- Sync, backfill and import with a database lease, one write unit per day, plausibility gate, change log
+  (replace / keep), events and audit lines; Scheduler bridge (Mon–Fri 16:15, 17:00, 18:30 and 08:00 Europe/Berlin,
+  plus one run on a cold start while no rate exists) and a Messenger handler.
+- Converter: legs through EUR, one-step cross amounts (`amount × to ÷ from`, rounded once at scale 12), lookback over
+  weekends and TARGET holidays, future / before-history / unknown refusals, "now" through outages up to
+  `max_staleness_days` then `fail` or `flag`, manual rates winning on covered dates, per-request memo and an
+  optional shared PSR-6 cache.
+- Manual rates: create, edit (versioned), end (never deleted), overlap (serialised on a guard row) and deviation
+  gates, audit; without `manual.allow_past` an edit or an end never changes a past date.
+- Console: `rates:sync`, `rates:backfill`, `rates:import`, `rates:show` (`--health`, `--verify`), `rates:changes`
+  (`--apply`), `rates:manual:{set,end,list}`, `rates:prune`, `actor:forget`, `convert`, `schema-check`.
+- Twig filter `reference_money`, functions `reference_money_parts` and `reference_rate_note` (10 locales).
+- House access pattern: `CurrencyKitAccessCheckerInterface` with role-based and allow-all (demo) checkers,
+  `CurrencyKitGuard`, `CURRENCY_ACCESS_CHECK`, `MANUAL_RATE_ACCESS_CHECK` and `SYNC_ACCESS_CHECK` events.
+- Tooling: CI matrix (PHP 8.2–8.5 × Symfony 7.4 / 8.1), real-database job (SQLite, MySQL 8.4, MariaDB 11.4,
+  PostgreSQL 16), PHPStan max with the FrankenPHP rulesets, Rector, Igor, PHP-CS-Fixer, 100 % coverage gate.

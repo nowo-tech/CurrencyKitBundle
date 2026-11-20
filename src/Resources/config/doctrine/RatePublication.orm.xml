@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+    <!-- Twin of the attributes on RatePublication (a test asserts both give the same schema). Read-only: written through DBAL. -->
+    <entity name="Nowo\CurrencyKitBundle\Infrastructure\Doctrine\Entity\RatePublication" table="currency_rate_publication" read-only="true">
+        <unique-constraints>
+            <unique-constraint name="currency_rate_publication_source_date_uniq" columns="source,rate_date"/>
+        </unique-constraints>
+        <id name="id" type="string" column="id" length="36">
+            <options>
+                <option name="fixed">true</option>
+            </options>
+        </id>
+        <field name="source" type="string" column="source" length="32"/>
+        <field name="rateDate" type="date_immutable" column="rate_date"/>
+        <field name="origin" type="string" column="origin" length="16"/>
+        <field name="currencyCount" type="smallint" column="currency_count"/>
+        <field name="contentHash" type="string" column="content_hash" length="64">
+            <options>
+                <option name="fixed">true</option>
+            </options>
+        </field>
+        <field name="firstStoredAt" type="datetime_immutable" column="first_stored_at"/>
+        <field name="lastSeenAt" type="datetime_immutable" column="last_seen_at"/>
+        <field name="version" type="integer" column="version"/>
+    </entity>
+</doctrine-mapping>

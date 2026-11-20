@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+    <!-- Twin of the attributes on SyncLock (a test asserts both give the same schema). Read-only: written through DBAL. -->
+    <entity name="Nowo\CurrencyKitBundle\Infrastructure\Doctrine\Entity\SyncLock" table="currency_sync_lock" read-only="true">
+        <id name="name" type="string" column="name" length="64"/>
+        <field name="lockedUntil" type="datetime_immutable" column="locked_until"/>
+        <field name="holder" type="string" column="holder" length="36"/>
+    </entity>
+</doctrine-mapping>

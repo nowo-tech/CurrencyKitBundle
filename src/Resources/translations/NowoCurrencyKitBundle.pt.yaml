@@ -1,0 +1,6 @@
+# Currency kit Twig output (pt). Plain text: Twig escapes it.
+twig:
+    reference_money: '≈ %amount% (taxa de referência %source% %date%)'
+    stale: '(desatualizada)'
+    no_reference_rate: '(sem taxa de referência)'
+    reference_note: 'Taxas de câmbio de referência, apenas para informação; não servem para pagamentos nem contabilidade.'
