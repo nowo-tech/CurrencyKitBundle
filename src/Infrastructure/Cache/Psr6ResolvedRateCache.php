@@ -34,9 +34,19 @@ final readonly class Psr6ResolvedRateCache implements ResolvedRateCacheInterface
     /**
      * {@inheritDoc}
      */
-    public function get(string $key): ?array
+    public function version(): string
     {
-        $item = $this->pool->getItem($this->key($key));
+        $version = $this->pool->getItem(self::VERSION_KEY);
+
+        return $version->isHit() && is_string($version->get()) ? $version->get() : '0';
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function get(string $key, string $version): ?array
+    {
+        $item = $this->pool->getItem($this->key($key, $version));
         if (!$item->isHit()) {
             return null;
         }
@@ -57,9 +67,9 @@ final readonly class Psr6ResolvedRateCache implements ResolvedRateCacheInterface
     /**
      * {@inheritDoc}
      */
-    public function set(string $key, array $value): void
+    public function set(string $key, string $version, array $value): void
     {
-        $item = $this->pool->getItem($this->key($key));
+        $item = $this->pool->getItem($this->key($key, $version));
         $item->set($value);
         $item->expiresAfter($this->ttl);
         $this->pool->save($item);
@@ -92,13 +102,10 @@ final readonly class Psr6ResolvedRateCache implements ResolvedRateCacheInterface
     }
 
     /**
-     * The versioned pool key of a lookup.
+     * The pool key of a lookup under a version token.
      */
-    private function key(string $key): string
+    private function key(string $key, string $version): string
     {
-        $version = $this->pool->getItem(self::VERSION_KEY);
-        $token   = $version->isHit() && is_string($version->get()) ? $version->get() : '0';
-
-        return 'nowo_currency_kit.' . hash('xxh128', $token . '|' . $key);
+        return 'nowo_currency_kit.' . hash('xxh128', $version . '|' . $key);
     }
 }

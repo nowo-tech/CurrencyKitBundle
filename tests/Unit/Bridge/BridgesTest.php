@@ -27,6 +27,7 @@ use Nowo\CurrencyKitBundle\Infrastructure\Symfony\Messenger\SyncReferenceRatesHa
 use Nowo\CurrencyKitBundle\Infrastructure\Symfony\Messenger\SyncReferenceRatesMessage;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use RuntimeException;
 use Symfony\Component\Messenger\Exception\UnrecoverableMessageHandlingException;
 use Symfony\Component\Scheduler\Generator\MessageContext;
 use Symfony\Component\Scheduler\Trigger\CronExpressionTrigger;
@@ -69,7 +70,7 @@ final class BridgesTest extends TestCase
 
     public function testScheduleAndColdStart(): void
     {
-        $schedule = (new CurrencyKitScheduleProvider($this->reader(false), ['16:15', '17:00', '18:30'], '08:00'))->getSchedule();
+        $schedule = (new CurrencyKitScheduleProvider($this->reader(false), new CurrencyKitSettings(SourceKey::of('ecb')), ['16:15', '17:00', '18:30'], '08:00'))->getSchedule();
         $messages = $schedule->getRecurringMessages();
         self::assertCount(5, $messages);
         $trigger = $messages[0]->getTrigger();
@@ -85,6 +86,35 @@ final class BridgesTest extends TestCase
         self::assertSame('2026-11-19 09:30', $retry->format('Y-m-d H:i'), 'then every 30 minutes while empty');
         self::assertNull((new ColdStartTrigger($this->reader(true)))->getNextRunDate($start), 'never once a rate exists');
         self::assertStringContainsString('cold start', (string) $empty);
+
+        // No cold-start run when a sync cannot load the first days (audit VR-14).
+        foreach ([new CurrencyKitSettings(SourceKey::of('ecb'), initialLast90Days: false), new CurrencyKitSettings(SourceKey::of('ecb'), outboundEnabled: false), new CurrencyKitSettings(SourceKey::of('manual'))] as $settings) {
+            $provider = new CurrencyKitScheduleProvider($this->reader(false), $settings, ['16:15'], '08:00');
+            self::assertCount(2, $provider->getSchedule()->getRecurringMessages());
+        }
+        // A database outage never crashes the scheduler worker.
+        $down = new class implements ReferenceRateReaderInterface {
+            public function latest(?SourceKey $source = null): ?PublicationInfo
+            {
+                throw new RuntimeException('database down');
+            }
+
+            public function ratesOn(RateDate $date, ?SourceKey $source = null): array
+            {
+                return [];
+            }
+
+            public function history(string $currency, RateDate $from, RateDate $to, ?SourceKey $source = null): array
+            {
+                return [];
+            }
+
+            public function changes(RateDate $from, RateDate $to, ?SourceKey $source = null): array
+            {
+                return [];
+            }
+        };
+        self::assertSame('2026-11-19 09:30', (new ColdStartTrigger($down, 30))->getNextRunDate($start)?->format('Y-m-d H:i'));
     }
 
     public function testHandler(): void

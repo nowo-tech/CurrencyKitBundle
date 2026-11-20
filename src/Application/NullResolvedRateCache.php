@@ -15,7 +15,15 @@ final readonly class NullResolvedRateCache implements ResolvedRateCacheInterface
     /**
      * {@inheritDoc}
      */
-    public function get(string $key): ?array
+    public function version(): string
+    {
+        return '0';
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function get(string $key, string $version): ?array
     {
         return null;
     }
@@ -23,7 +31,7 @@ final readonly class NullResolvedRateCache implements ResolvedRateCacheInterface
     /**
      * {@inheritDoc}
      */
-    public function set(string $key, array $value): void
+    public function set(string $key, string $version, array $value): void
     {
     }
 

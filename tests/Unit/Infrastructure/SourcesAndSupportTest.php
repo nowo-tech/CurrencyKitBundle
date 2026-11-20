@@ -125,13 +125,18 @@ final class SourcesAndSupportTest extends TestCase
         (new PsrLogAuditSink($logger))->record(new AuditEntry(AuditEntry::PRUNE, 'ops', ['days' => 3]));
         self::assertSame(['info', 'Currency kit audit.', ['action' => 'currency_kit.prune', 'actor' => 'ops', 'days' => 3]], $logger->records[0]);
 
-        $pool  = new ArrayAdapter();
-        $cache = new Psr6ResolvedRateCache($pool, 300);
-        self::assertNull($cache->get('k'));
-        $cache->set('k', ['rate' => '1.1', 'id' => null]);
-        self::assertSame(['rate' => '1.1', 'id' => null], $cache->get('k'));
+        $pool    = new ArrayAdapter();
+        $cache   = new Psr6ResolvedRateCache($pool, 300);
+        $version = $cache->version();
+        self::assertSame('0', $version);
+        self::assertNull($cache->get('k', $version));
+        $cache->set('k', $version, ['rate' => '1.1', 'id' => null]);
+        self::assertSame(['rate' => '1.1', 'id' => null], $cache->get('k', $version));
         $cache->invalidate();
-        self::assertNull($cache->get('k'), 'a new version hides old entries');
+        self::assertNotSame($version, $cache->version());
+        self::assertNull($cache->get('k', $cache->version()), 'a new version hides old entries');
+        $cache->set('late', $version, ['rate' => '9']);
+        self::assertNull($cache->get('late', $cache->version()), 'a value loaded before the invalidation stays under the old token');
         self::assertTrue($cache->claimOnce('stale|ecb', 3600));
         self::assertFalse($cache->claimOnce('stale|ecb', 3600));
         $item    = $pool->getItem('nowo_currency_kit.rates_version');
@@ -140,10 +145,10 @@ final class SourcesAndSupportTest extends TestCase
         $raw = $pool->getItem('nowo_currency_kit.' . hash('xxh128', $version . '|bad'));
         $raw->set('not an array');
         $pool->save($raw);
-        self::assertNull($cache->get('bad'));
+        self::assertNull($cache->get('bad', $version));
         $raw->set(['ok' => 'v', 3 => 'int key', 'x' => 1]);
         $pool->save($raw);
-        self::assertSame(['ok' => 'v'], $cache->get('bad'));
+        self::assertSame(['ok' => 'v'], $cache->get('bad', $version));
 
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
         $registry   = new ConnectionOnlyRegistry($connection);

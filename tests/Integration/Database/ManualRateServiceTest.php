@@ -145,6 +145,42 @@ final class ManualRateServiceTest extends DatabaseTestCase
         self::assertSame('9', $manualSource->rate, 'no deviation gate without a source');
     }
 
+    public function testAStartedWindowNeverChangesThePast(): void
+    {
+        $manual  = $this->services->manual;
+        $started = $this->services(['manualAllowPast' => true])->manual->create(self::input('1.1', '2026-11-10'));
+        foreach ([
+            'rate change'          => static fn (): ManualRateView => $manual->update($started->id, self::input('1.2', '2026-11-10'), 1),
+            'first day moved'      => static fn (): ManualRateView => $manual->update($started->id, self::input('1.1', '2026-11-12'), 1),
+            'last day in the past' => static fn (): ManualRateView => $manual->update($started->id, self::input('1.1', '2026-11-10', '2026-11-15'), 1),
+            'end before yesterday' => static fn (): ManualRateView => $manual->end($started->id, RateDate::of('2026-11-17'), 1),
+            'retract'              => static fn (): ManualRateView => $manual->end($started->id, RateDate::of('2026-11-09'), 1),
+        ] as $case => $call) {
+            try {
+                $call();
+                self::fail('accepted: ' . $case);
+            } catch (ManualRateRefusedException) {
+            }
+        }
+        $moved = $manual->update($started->id, self::input('1.1', '2026-11-10', '2026-12-31'), 1);
+        self::assertSame('2026-12-31', $moved->validUntil?->value, 'the last day may move from yesterday on');
+        $kept = $manual->update($started->id, new ManualRateInput(CurrencyCode::of('USD'), '1.1', RateDate::of('2026-11-10'), RateDate::of('2026-12-31'), 'Reason reworded'), 2);
+        self::assertSame('Reason reworded', $kept->reason);
+        $ended = $manual->end($started->id, RateDate::of('2026-11-18'), 3);
+        self::assertSame('2026-11-18', $ended->validUntil?->value, 'ended yesterday');
+
+        $today = $manual->create(self::input('1.1', '2026-11-19', null, false, 'GBP'));
+        try {
+            $manual->end($today->id, RateDate::of('2026-11-18'), 1);
+            self::fail('a window that started today was retracted');
+        } catch (ManualRateRefusedException) {
+        }
+        $past  = $this->services(['manualAllowPast' => true])->manual;
+        $other = $past->create(self::input('1.1', '2026-11-01', null, false, 'JPY'));
+        self::assertSame('1.3', $past->update($other->id, self::input('1.3', '2026-11-01', null, false, 'JPY'), 1)->rate, 'allow_past keeps the old behaviour');
+        self::assertSame('2026-10-31', $past->end($other->id, RateDate::of('2026-10-31'), 2)->validUntil?->value);
+    }
+
     public function testRacingUpdateLosesOnTheVersion(): void
     {
         $manual  = $this->services->manual;

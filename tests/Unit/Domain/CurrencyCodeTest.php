@@ -38,6 +38,11 @@ final class CurrencyCodeTest extends TestCase
         yield 'gold' => ['XAU'];
         yield 'test code' => ['XTS'];
         yield 'no currency' => ['XXX'];
+        yield 'ECU' => ['XEU'];
+        yield 'gold franc' => ['XFO'];
+        yield 'UIC franc' => ['XFU'];
+        yield 'RINET funds' => ['XRE'];
+        yield 'Arab accounting dinar' => ['XAD'];
         yield 'empty' => [''];
     }
 
@@ -68,6 +73,10 @@ final class CurrencyCodeTest extends TestCase
         foreach (CurrencyCode::REFUSED_X_CODES as $code) {
             self::assertArrayNotHasKey($code, Iso4217Table::CURRENCIES);
         }
+        self::assertSame(0, CurrencyCode::of('BYR')->minorUnits());
+        self::assertSame(0, CurrencyCode::of('ECS')->minorUnits());
+        self::assertSame(0, CurrencyCode::of('MGF')->minorUnits());
+        self::assertSame('2023-01', Iso4217Table::CURRENCIES['HRK'][3], 'the latest withdrawal wins'); // @phpstan-ignore staticMethod.alreadyNarrowedType
         foreach (['EUR', 'USD', 'GBP', 'JPY', 'CHF', 'CYP', 'MTL', 'EEK', 'LTL', 'LVL', 'SIT', 'SKK', 'ROL', 'TRL', 'HRK', 'RUB'] as $code) {
             self::assertArrayHasKey($code, Iso4217Table::CURRENCIES, $code);
         }

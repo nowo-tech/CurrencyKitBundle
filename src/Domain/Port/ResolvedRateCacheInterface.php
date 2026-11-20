@@ -11,18 +11,24 @@ namespace Nowo\CurrencyKitBundle\Domain\Port;
 interface ResolvedRateCacheInterface
 {
     /**
-     * A cached lookup, or null on a miss.
+     * The current version token. A lookup reads it once and passes it to both get() and set(), so a value loaded
+     * before a concurrent invalidation is never stored under the new version (audit VR-8).
+     */
+    public function version(): string;
+
+    /**
+     * A cached lookup of that version, or null on a miss.
      *
      * @return array<string, string|null>|null
      */
-    public function get(string $key): ?array;
+    public function get(string $key, string $version): ?array;
 
     /**
-     * Stores a lookup.
+     * Stores a lookup under that version.
      *
      * @param array<string, string|null> $value
      */
-    public function set(string $key, array $value): void;
+    public function set(string $key, string $version, array $value): void;
 
     /**
      * Invalidates every cached lookup (bumps the version).

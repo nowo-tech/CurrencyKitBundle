@@ -422,6 +422,13 @@ final readonly class DbalRateStore implements RateStoreInterface
      */
     public function lockManualRates(string $currency): array
     {
+        // A row that always exists serialises the overlap check under READ COMMITTED too (PostgreSQL): locking only the
+        // currency's manual rates would not stop two first rates of a currency (audit VR-1).
+        $guard = 'manual_' . $currency;
+        DbalSql::insertIgnore($this->connection, $this->tables->syncLock(), ['name' => $guard, 'locked_until' => '1970-01-01 00:00:00', 'holder' => ''], ['name']);
+        $this->forUpdate($this->connection->createQueryBuilder()->select('name')->from($this->tables->syncLock())
+            ->where('name = :name')->setParameter('name', $guard))
+            ->executeQuery()->fetchAllAssociative();
         $rows = $this->forUpdate($this->manualRateQuery()
             ->where('currency = :currency')->setParameter('currency', $currency)
             ->orderBy('id', 'ASC'))

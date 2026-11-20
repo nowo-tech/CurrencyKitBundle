@@ -101,6 +101,7 @@ final readonly class ManualRateService implements ManualRateServiceInterface
                 throw new ManualRateRefusedException('An ended manual rate, or its currency, cannot be changed.');
             }
             $this->checkRules($input, $current);
+            $this->keepThePast($current, $input);
             if (!$current->validFrom->equals($input->validFrom) || $current->validUntil?->value !== $input->validUntil?->value) {
                 foreach ($this->store->lockManualRates($input->currency->code) as $existing) {
                     if ($existing->id !== $current->id && $existing->overlaps($input->validFrom, $input->validUntil)) {
@@ -141,6 +142,7 @@ final readonly class ManualRateService implements ManualRateServiceInterface
             if ($lastDay->isBefore($current->validFrom->plusDays(-1)) || ($current->validUntil instanceof RateDate && $lastDay->isAfter($current->validUntil))) {
                 throw new ManualRateRefusedException('The last day must be inside the window (or the day before it starts).');
             }
+            $this->keepThePastOnEnd($current, $lastDay);
             $next = new ManualRateView($current->id, $current->currency, $current->rate, $current->validFrom, $lastDay, $current->reason, ManualRateStatus::Ended, $current->createdBy, $current->createdAt, $actor, $this->clock->now(), $current->version + 1);
             if (!$this->store->updateManualRate($next, $expectedVersion)) {
                 throw new StaleManualRateException();
@@ -193,6 +195,52 @@ final readonly class ManualRateService implements ManualRateServiceInterface
         if ($latest !== null && Decimal::movedMoreThan($latest['rate'], $input->rate, $this->settings->manualMaxDeviationPercent)) {
             throw new ManualRateRefusedException('The rate deviates from the source by more than manual.max_deviation_percent; confirm it with force.');
         }
+    }
+
+    /**
+     * Without `manual.allow_past`, an edit never changes the result of a past date (owner decision Q2, audit VR-3): on a
+     * window that has started, the rate and the first day stay as they are, and the last day may only move between
+     * yesterday and later (end it yesterday and create a new rate instead).
+     *
+     * @throws ManualRateRefusedException
+     */
+    private function keepThePast(ManualRateView $current, ManualRateInput $input): void
+    {
+        $today = $this->resolver->today();
+        if ($this->settings->manualAllowPast || $current->validFrom->isAfter($today)) {
+            return;
+        }
+        $yesterday = $today->plusDays(-1);
+        $untilKept = $current->validUntil?->value === $input->validUntil?->value;
+        $untilOk   = $untilKept || (!$this->endsBefore($current->validUntil, $yesterday) && !$this->endsBefore($input->validUntil, $yesterday));
+        if (Decimal::compare($current->rate, $input->rate) !== 0 || !$current->validFrom->equals($input->validFrom) || !$untilOk) {
+            throw new ManualRateRefusedException('A started manual rate cannot change past dates (manual.allow_past is false): end it yesterday and create a new one.');
+        }
+    }
+
+    /**
+     * Without `manual.allow_past`, ending never changes a past date: the last day is yesterday or later, and a window
+     * that has started cannot be retracted.
+     *
+     * @throws ManualRateRefusedException
+     */
+    private function keepThePastOnEnd(ManualRateView $current, RateDate $lastDay): void
+    {
+        $today = $this->resolver->today();
+        if ($this->settings->manualAllowPast || $current->validFrom->isAfter($today)) {
+            return;
+        }
+        if ($lastDay->isBefore($today->plusDays(-1)) || $lastDay->isBefore($current->validFrom)) {
+            throw new ManualRateRefusedException('A started manual rate ends yesterday at the earliest and cannot be retracted (manual.allow_past is false).');
+        }
+    }
+
+    /**
+     * Whether a last day (null = open) is before the date.
+     */
+    private function endsBefore(?RateDate $until, RateDate $date): bool
+    {
+        return $until instanceof RateDate && $until->isBefore($date);
     }
 
     /**

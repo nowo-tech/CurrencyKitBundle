@@ -4,6 +4,7 @@
 
 - [Require the package](#require-the-package)
 - [Register the bundles](#register-the-bundles)
+- [Supported databases](#supported-databases)
 - [Create the tables](#create-the-tables)
 - [First sync](#first-sync)
 
@@ -29,6 +30,11 @@ return [
 
 No configuration is needed for the defaults (ECB source, default entity manager's connection, `nowo_` table prefix).
 See [CONFIGURATION.md](CONFIGURATION.md).
+
+## Supported databases
+
+MySQL 8.4, MariaDB 11.4 and PostgreSQL 16 (tested in CI). SQLite is for development and tests only: it keeps
+`DECIMAL(24,12)` as a double, so it cannot hold every rate at full precision.
 
 ## Create the tables
 

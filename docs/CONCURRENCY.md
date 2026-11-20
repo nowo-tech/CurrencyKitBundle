@@ -6,10 +6,10 @@
 | --- | --- | --- | --- |
 | Store one day (sync, backfill, import, Messenger) | 1 per day | Insert-or-ignore + `SELECT … FOR UPDATE` of the publication row, unique `(source, rate_date, currency)` | Replay ×3; final ⇒ `ConcurrencyConflict` (`CONFLICT_001`, console exit 1); `SyncInterruptedException` → `CONFLICT_002` when an earlier day of the run committed |
 | Run lease | 1 statement | Conditional `UPDATE … WHERE locked_until < now` (no transaction held while fetching) | Held ⇒ `skipped` with the seconds left (console exit 0) |
-| Manual rate create | 1 | `FOR UPDATE` of the currency's manual rates (by id), overlap check, insert | Overlap ⇒ `CURRENCY_009`; lock ⇒ `CONFLICT_001` |
+| Manual rate create | 1 | Insert-or-ignore + `FOR UPDATE` of the guard row `manual_<CODE>` in `currency_sync_lock` (always exists, so READ COMMITTED serialises too), then the currency's manual rates by id, overlap check, insert | Overlap ⇒ `CURRENCY_009`; lock ⇒ `CONFLICT_001` |
 | Manual rate update / end | 1 | `UPDATE … WHERE id = ? AND version = ?` (+ the overlap lock when the window moves) | Stale ⇒ `CURRENCY_008`; lock ⇒ `CONFLICT_001` |
 | Apply a kept change | 1 | `FOR UPDATE` of the publication row; no-op when the stored value already equals the kept one | Already applied ⇒ no-op |
-| Prune | batches of 1 000 days | One unit per batch | Lock ⇒ replay; final ⇒ exit 1 |
+| Prune | batches of 1 000 days | One unit per batch | Lock ⇒ replay; final ⇒ exit 1, `CONFLICT_002` when earlier batches were committed |
 | Forget an actor | 1 | Two `UPDATE … SET … = NULL` | Lock ⇒ replay |
 
 ## Rules applied
@@ -24,7 +24,10 @@
   failure rolls back to it and propagates.
 - No HTTP, file or mail I/O inside a unit: feeds are fetched and validated before any write; files are read one day at
   a time between units. Events, audit lines and cache invalidation run after each commit.
-- Locks in a fixed order: the publication row, then the day's rate rows; manual rates by id. READ COMMITTED assumed.
+- Locks in a fixed order: the publication row, then the day's rate rows; for manual rates the guard row, then the
+  rates by id. Correct under READ COMMITTED and REPEATABLE READ (MariaDB's next-key locks may make a concurrent sync
+  wait on neighbouring days; it then replays or answers a conflict).
+- Messenger: do not wrap the sync handler in `doctrine_transaction` (the units would run once, nested, without replay).
 - Replays hold nothing from an earlier attempt: rows are re-read and the actor is re-resolved on every attempt.
 - With transaction-doctrine's bundle installed, its `CommitLedger` is passed to the unit: an attempt that already
   committed is not replayed (`committed: true`).

@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Nowo\CurrencyKitBundle\Application\ReferenceRateReaderInterface;
 use Nowo\CurrencyKitBundle\Domain\Rate\PublicationInfo;
 use Symfony\Component\Scheduler\Trigger\TriggerInterface;
+use Throwable;
 
 /**
  * One sync on a cold start when no rate exists yet (Beacon QB-6): fires right after the scheduler starts, then every
@@ -38,7 +39,13 @@ final class ColdStartTrigger implements TriggerInterface
      */
     public function getNextRunDate(DateTimeImmutable $run): ?DateTimeImmutable
     {
-        if ($this->reader->latest() instanceof PublicationInfo) {
+        try {
+            $hasRates = $this->reader->latest() instanceof PublicationInfo;
+        } catch (Throwable) {
+            // The database is down: never crash the scheduler worker; look again later (audit VR-14).
+            return $run->modify('+' . $this->retryMinutes . ' minutes');
+        }
+        if ($hasRates) {
             return null;
         }
         if (!$this->started) {

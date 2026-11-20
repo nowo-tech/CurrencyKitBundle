@@ -13,6 +13,9 @@ use function max;
 use function preg_match;
 use function rtrim;
 use function str_contains;
+use function str_replace;
+use function strlen;
+use function trim;
 
 /**
  * Decimal-string arithmetic on `brick/math` (contract section 5.2). Every argument and result is a plain decimal
@@ -58,6 +61,33 @@ final class Decimal
         } catch (MathException $e) {
             throw new InvalidAmountException('Division by zero.', $e);
         }
+    }
+
+    /**
+     * `$a × $b ÷ $c` in one step, rounded once to `$scale` fraction digits (fixed scale). `$c` must not be zero.
+     *
+     * @throws InvalidAmountException when `$c` is zero
+     */
+    public static function multiplyDivide(string $a, string $b, string $c, int $scale = self::SCALE, RoundingMode $mode = RoundingMode::HalfEven): string
+    {
+        return self::divide(BigDecimal::of($a)->multipliedBy($b)->toString(), $c, $scale, $mode);
+    }
+
+    /**
+     * A plain decimal string from any numeric text brick/math reads, scientific notation included (`1.5E+2` is
+     * `150`). The input must be numeric (a JSON number's text).
+     */
+    public static function plain(string $numeric): string
+    {
+        return self::canonical(BigDecimal::of($numeric)->toString());
+    }
+
+    /**
+     * Significant digits of a plain decimal string (leading zeros, sign and point excluded).
+     */
+    public static function significantDigits(string $value): int
+    {
+        return max(1, strlen(trim(str_replace(['-', '.'], '', $value), '0')));
     }
 
     /**

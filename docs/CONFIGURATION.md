@@ -5,14 +5,14 @@ Every key with its default. The tree is strict: unknown keys fail the container 
 ```yaml
 nowo_currency_kit:
     doctrine:
-        entity_manager: null          # manager whose CONNECTION the bundle uses (null: the default one); never flushed
+        entity_manager: null          # manager whose CONNECTION the bundle uses (null: doctrine's default_entity_manager); never flushed
         table_prefix: nowo_           # ^[a-z][a-z0-9_]{0,15}$ or empty
         mapping: xml                  # xml | attribute (read-only entities for schema tools and host queries)
     sources:
         ecb:
             enabled: true
             label: ECB
-            daily_url: 'https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml'
+            daily_url: 'https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml'   # https only (the three URLs)
             last_90_days_url: 'https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist-90d.xml'
             history_url: 'https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.xml'
         frankfurter:                  # a Frankfurter-compatible JSON API (self-hosted mirror); off by default
@@ -79,6 +79,7 @@ nowo_currency_kit:
 ## Rules checked at build time
 
 - `conversion.source` names an enabled source or `manual`.
+- The ECB feed URLs are https.
 - `sources.frankfurter.enabled` needs `base_uri` (https; http only with `allow_private_network`).
 - `security.access_checker: allow_all` needs `allow_unauthenticated: true`.
 - `twig.enabled` with Twig present needs `ext-intl`; `scheduler.enabled` needs `symfony/scheduler`.
@@ -88,8 +89,8 @@ nowo_currency_kit:
 
 `outbound.enabled` and `conversion.on_stale` accept `%env()%` placeholders (`%env(bool:CURRENCY_OUTBOUND)%`); they
 are resolved when the services are built (once per worker). An unreadable `outbound.enabled` counts as false (fail
-closed); an unknown `on_stale` fails. Registration as runtime settings of `nowo-tech/runtime-setting-contract`
-(database values changed live) is planned for 0.2.
+closed); an unknown `on_stale` fails. They are not registered as runtime settings of
+`nowo-tech/runtime-setting-contract` in 0.1.0 (owner decision): database values changed live arrive in 0.2.
 
 ## Services
 

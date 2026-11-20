@@ -13,7 +13,6 @@ use Nowo\CurrencyKitBundle\Domain\Currency\CurrencyCode;
 use Nowo\CurrencyKitBundle\Domain\Exception\InvalidAmountException;
 use Nowo\CurrencyKitBundle\Domain\Money\Decimal;
 use Nowo\CurrencyKitBundle\Domain\Money\Money;
-use Nowo\CurrencyKitBundle\Domain\Money\RoundingMode;
 use Nowo\CurrencyKitBundle\Domain\Port\CurrencyCatalogueInterface;
 use Nowo\CurrencyKitBundle\Domain\Rate\RateDate;
 use Nowo\CurrencyKitBundle\Domain\Rate\SourceKey;
@@ -115,9 +114,9 @@ final readonly class CurrencyConverter implements CurrencyConverterInterface
      */
     private function convertMoney(Money $money, ResolvedRate $rate, ?ConversionOptions $options): ConvertedAmount
     {
-        $exact = $rate->from->equals($rate->to)
-            ? Decimal::round($money->amount, Decimal::SCALE, RoundingMode::HalfEven)
-            : Decimal::multiply($money->amount, $rate->rate);
+        // One step, rounded once at scale 12 (audit VR-4): amount × r(EUR→to) ÷ r(EUR→from); the reported rate stays the
+        // scale-12 quotient.
+        $exact   = Decimal::multiplyDivide($money->amount, $this->legRate($rate->legs, $rate->to), $this->legRate($rate->legs, $rate->from));
         $scale   = $options->scale ?? $rate->to->minorUnits();
         $rounded = Decimal::round($exact, $scale, $options->roundingMode ?? $this->settings->roundingMode);
 
@@ -134,6 +133,22 @@ final readonly class CurrencyConverter implements CurrencyConverterInterface
             $rate->manualRateId,
             $rate->legs,
         );
+    }
+
+    /**
+     * The EUR → currency value of a leg ('1' for EUR or the same currency: no leg).
+     *
+     * @param list<RateLeg> $legs
+     */
+    private function legRate(array $legs, CurrencyCode $currency): string
+    {
+        foreach ($legs as $leg) {
+            if ($leg->currency->equals($currency)) {
+                return $leg->rate;
+            }
+        }
+
+        return '1';
     }
 
     /**

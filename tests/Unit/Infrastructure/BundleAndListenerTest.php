@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\CurrencyKitBundle\Tests\Unit\Infrastructure;
 
+use Doctrine\Bundle\DoctrineBundle\DependencyInjection\DoctrineExtension;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\Event\LoadClassMetadataEventArgs;
 use Doctrine\ORM\Mapping\ClassMetadata;
@@ -45,5 +46,12 @@ final class BundleAndListenerTest extends TestCase
         $configurator = new ContainerConfigurator($builder, new PhpFileLoader($builder, new FileLocator(__DIR__)), $instanceof, __DIR__, __FILE__);
         (new NowoCurrencyKitBundle())->prependExtension($configurator, $builder);
         self::assertSame([], $builder->getExtensionConfig('doctrine'));
+
+        // With DoctrineBundle but no ORM configuration yet, the mapping goes to DoctrineBundle's "default" manager.
+        $builder->registerExtension(new DoctrineExtension());
+        (new NowoCurrencyKitBundle())->prependExtension($configurator, $builder);
+        /** @var array{orm: array{entity_managers: array<string, mixed>}} $config */
+        $config = $builder->getExtensionConfig('doctrine')[0];
+        self::assertArrayHasKey('default', $config['orm']['entity_managers']);
     }
 }

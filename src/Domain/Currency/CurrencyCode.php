@@ -20,8 +20,8 @@ use function preg_match;
  */
 final readonly class CurrencyCode implements Stringable
 {
-    /** Codes refused in 0.x (QC-5). */
-    public const REFUSED_X_CODES = ['XAU', 'XAG', 'XPT', 'XPD', 'XDR', 'XSU', 'XUA', 'XBA', 'XBB', 'XBC', 'XBD', 'XTS', 'XXX'];
+    /** Codes refused in 0.x (QC-5): precious metals, SDR and other units of account (XEU, XFO, XFU, XRE, XAD), test codes. */
+    public const REFUSED_X_CODES = ['XAU', 'XAG', 'XPT', 'XPD', 'XDR', 'XSU', 'XUA', 'XBA', 'XBB', 'XBC', 'XBD', 'XTS', 'XXX', 'XEU', 'XFO', 'XFU', 'XRE', 'XAD'];
 
     /** The pivot of every stored rate in 0.x. */
     public const EUR = 'EUR';

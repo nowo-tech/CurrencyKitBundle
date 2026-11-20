@@ -79,6 +79,17 @@ final class KernelWiringTest extends KernelTestCase
         self::assertInstanceOf(CurrencyKitAccessCheckerInterface::class, $checker);
     }
 
+    public function testMappingFollowsTheHostsDefaultManagerName(): void
+    {
+        $container    = $this->boot([], [], 'named');
+        $synchronizer = $container->get(RateSynchronizerInterface::class);
+        self::assertInstanceOf(RateSynchronizerInterface::class, $synchronizer);
+        $synchronizer->sync();
+        $manager = $container->get('nowo_currency_kit.entity_manager');
+        self::assertInstanceOf(EntityManagerInterface::class, $manager);
+        self::assertCount(10, $manager->getRepository(ReferenceRate::class)->findBy(['currency' => 'USD']));
+    }
+
     public function testDemoCheckerAndRuntimeValues(): void
     {
         putenv('CYK_ON_STALE=flag'); // @phpstan-ignore-line (test-only environment)
@@ -141,6 +152,7 @@ final class KernelWiringTest extends KernelTestCase
             'bad time'               => ['sync' => ['times' => ['25:00']]],
             'bad catch-up'           => ['sync' => ['catch_up_time' => '8am']],
             'contact e-mail'         => ['outbound' => ['contact_url' => 'mailto:someone@example.test']],
+            'ecb over http'          => ['sources' => ['ecb' => ['daily_url' => 'http://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml']]],
         ] as $case => $config) {
             try {
                 $this->boot($config, [], 'standard', false);

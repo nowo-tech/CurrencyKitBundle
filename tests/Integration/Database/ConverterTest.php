@@ -175,6 +175,39 @@ final class ConverterTest extends DatabaseTestCase
         $flag->converter->convert('1', 'EUR', 'USD', null, new ConversionOptions(allowStale: false));
     }
 
+    public function testOutageDaysSevenToElevenInBothModes(): void
+    {
+        foreach ([7 => false, 8 => false, 9 => false, 10 => false, 11 => true] as $days => $stale) {
+            $now = RateDate::of('2026-11-19')->plusDays($days)->value . ' 12:00:00';
+            foreach ([OnStale::Fail, OnStale::Flag] as $mode) {
+                $services = new TestServices($this->connection, new MockClock($now, 'Europe/Berlin'), $this->http->client, ['onStale' => $mode]);
+                if ($stale && $mode === OnStale::Fail) {
+                    try {
+                        $services->converter->convert('1', 'EUR', 'USD');
+                        self::fail('day ' . $days . ' converted while stale');
+                    } catch (StaleRateException $e) {
+                        self::assertSame($days, $e->ageDays);
+                    }
+
+                    continue;
+                }
+                $result = $services->converter->convert('1', 'EUR', 'USD');
+                self::assertSame('2026-11-19', $result->rateDate->value, 'day ' . $days);
+                self::assertSame($stale, $result->stale, 'day ' . $days . ' ' . $mode->value);
+            }
+        }
+    }
+
+    public function testCrossRatesAreComputedInOneStep(): void
+    {
+        $idr = $this->services->converter->convert('1000000', 'IDR', 'EUR', null, new ConversionOptions(scale: 12));
+        self::assertSame('49.817915518779', $idr->exactAmount, 'amount ÷ 20073.1 at scale 12, not amount × (1 ÷ 20073.1)');
+        self::assertSame('0.000049817916', $idr->rate);
+        $gbp = $this->services->converter->convert('1000', 'USD', 'GBP', null, new ConversionOptions(scale: 12));
+        self::assertSame('760.380276564774', $gbp->exactAmount);
+        self::assertSame('0.760380276565', $gbp->rate);
+    }
+
     public function testStaleWithNothingStoredIsBeforeHistory(): void
     {
         $this->connection->executeStatement('DELETE FROM nowo_currency_rate');

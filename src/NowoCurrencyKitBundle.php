@@ -14,6 +14,7 @@ use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigura
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 
 use function array_key_exists;
+use function array_key_first;
 use function is_array;
 use function is_string;
 
@@ -75,23 +76,44 @@ final class NowoCurrencyKitBundle extends AbstractBundle
         if (!$builder->hasExtension('doctrine')) {
             return;
         }
-        $manager = 'default';
+        $manager = null;
         $mapping = 'xml';
         foreach ($builder->getExtensionConfig(self::ALIAS) as $config) {
             $doctrine = is_array($config) && is_array($config['doctrine'] ?? null) ? $config['doctrine'] : [];
             if (array_key_exists('entity_manager', $doctrine)) {
-                $manager = is_string($doctrine['entity_manager']) && $doctrine['entity_manager'] !== '' ? $doctrine['entity_manager'] : 'default';
+                $manager = is_string($doctrine['entity_manager']) && $doctrine['entity_manager'] !== '' ? $doctrine['entity_manager'] : null;
             }
             if (($doctrine['mapping'] ?? null) === 'attribute') {
                 $mapping = 'attribute';
             }
         }
+        $manager ??= $this->defaultEntityManager($builder);
         $builder->prependExtensionConfig('doctrine', ['orm' => ['entity_managers' => [$manager => ['mappings' => [self::MAPPING_NAME => [
             'type'      => $mapping,
             'dir'       => $mapping === 'xml' ? __DIR__ . '/Resources/config/doctrine' : __DIR__ . '/Infrastructure/Doctrine/Entity',
             'prefix'    => 'Nowo\CurrencyKitBundle\Infrastructure\Doctrine\Entity',
             'is_bundle' => false,
         ]]]]]]);
+    }
+
+    /**
+     * The host's default entity manager name (audit VR-10): `doctrine.orm.default_entity_manager`, else the first
+     * declared entity manager, else `default` (DoctrineBundle's own rule).
+     */
+    private function defaultEntityManager(ContainerBuilder $builder): string
+    {
+        $first = null;
+        foreach ($builder->getExtensionConfig('doctrine') as $doctrine) {
+            $orm = is_array($doctrine) && is_array($doctrine['orm'] ?? null) ? $doctrine['orm'] : [];
+            if (is_string($orm['default_entity_manager'] ?? null) && $orm['default_entity_manager'] !== '') {
+                return $orm['default_entity_manager'];
+            }
+            if ($first === null && is_array($orm['entity_managers'] ?? null) && $orm['entity_managers'] !== []) {
+                $first = (string) array_key_first($orm['entity_managers']);
+            }
+        }
+
+        return $first ?? 'default';
     }
 
     /**

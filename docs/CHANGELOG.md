@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - 0.1.0 core (contract S1, [docs/CONTRACT.md](CONTRACT.md); owner answers QC-1…15, Beacon answers QB-1…8).
 - Domain: decimal-string `Money` (≤ 18 integer + 12 fraction digits) on `brick/math`, `CurrencyCode` with the bundled
   ISO 4217 table (current list of 2026-09-17 and historic codes withdrawn since 1999; precious metals, SDR and test
-  codes refused), `RateDate`, `ConvertedAmount` (rounded and exact amount, rate, dates, source, stale flag, manual
+  codes and the units of account XEU, XFO, XFU, XRE, XAD refused), `RateDate`, `ConvertedAmount` (rounded and exact amount, rate, dates, source, stale flag, manual
   rate id, legs), rounding modes, events and coded exceptions (`CURRENCY_001`…`013`, `ACCESS_002`).
 - Storage: five bundle tables (`<prefix>currency_rate_publication`, `currency_rate`, `currency_rate_change`,
   `currency_manual_rate`, `currency_sync_lock`) mapped read-only (XML or attributes) on the configured manager and
@@ -23,10 +23,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Sync, backfill and import with a database lease, one write unit per day, plausibility gate, change log
   (replace / keep), events and audit lines; Scheduler bridge (Mon–Fri 16:15, 17:00, 18:30 and 08:00 Europe/Berlin,
   plus one run on a cold start while no rate exists) and a Messenger handler.
-- Converter: legs through EUR, lookback over weekends and TARGET holidays, future / before-history / unknown
-  refusals, staleness for "now" (`fail` or `flag`), manual rates winning on covered dates, per-request memo and an
+- Converter: legs through EUR, one-step cross amounts (`amount × to ÷ from`, rounded once at scale 12), lookback over
+  weekends and TARGET holidays, future / before-history / unknown refusals, "now" through outages up to
+  `max_staleness_days` then `fail` or `flag`, manual rates winning on covered dates, per-request memo and an
   optional shared PSR-6 cache.
-- Manual rates: create, edit (versioned), end (never deleted), overlap and deviation gates, audit.
+- Manual rates: create, edit (versioned), end (never deleted), overlap (serialised on a guard row) and deviation
+  gates, audit; without `manual.allow_past` an edit or an end never changes a past date.
 - Console: `rates:sync`, `rates:backfill`, `rates:import`, `rates:show` (`--health`, `--verify`), `rates:changes`
   (`--apply`), `rates:manual:{set,end,list}`, `rates:prune`, `actor:forget`, `convert`, `schema-check`.
 - Twig filter `reference_money`, functions `reference_money_parts` and `reference_rate_note` (10 locales).

@@ -41,6 +41,8 @@ final class OtherParsersTest extends TestCase
         $rebased = $parser->parse('{"amount":1,"base":"USD","date":"2026-11-19","rates":{"EUR":0.5,"GBP":0.25,"JPY":100}}', true, 10);
         self::assertSame(['USD' => '2', 'GBP' => '0.5', 'JPY' => '200'], $rebased[0]->rates);
         self::assertSame(['USD' => '137'], $parser->parse('{"amount":1,"base":"EUR","date":"2026-11-19","rates":{"USD":137}}', false, 10)[0]->rates);
+        // %G prints 1.5E+2 for 150.0: the value must still come out as a plain decimal (audit VR-5).
+        self::assertSame(['JPY' => '150', 'IDR' => '17700', 'XYZ' => '0.00001'], $parser->parse('{"amount":1.0,"base":"EUR","date":"2026-11-19","rates":{"JPY":150.0,"IDR":17700.0,"XYZ":0.00001}}', false, 10)[0]->rates);
         foreach ([
             '{not json'                                                                                                         => RateSourceResponseException::REASON_MALFORMED,
             '[]'                                                                                                                => RateSourceResponseException::REASON_MALFORMED,
@@ -50,7 +52,6 @@ final class OtherParsersTest extends TestCase
             '{"amount":1,"base":"EUR","date":20261119,"rates":{"USD":1}}'                                                       => RateSourceResponseException::REASON_MALFORMED,
             '{"amount":1,"base":"EUR","date":"2026-13-01","rates":{"USD":1}}'                                                   => RateSourceResponseException::REASON_INVALID_VALUE,
             '{"amount":1,"base":"EUR","date":"2026-11-19","rates":{"USD":"1.1"}}'                                               => RateSourceResponseException::REASON_INVALID_VALUE,
-            '{"amount":1,"base":"EUR","date":"2026-11-19","rates":{"USD":0.00001}}'                                             => RateSourceResponseException::REASON_INVALID_VALUE,
             '{"amount":1,"base":"EUR","start_date":"a","end_date":"b","rates":{"2026-11-10":{"USD":1},"2026-11-11":{"USD":1}}}' => RateSourceResponseException::REASON_LIMIT,
             '{"a":{"b":{"c":{"d":{"e":{"f":{"g":{"h":{"i":1}}}}}}}}}'                                                           => RateSourceResponseException::REASON_MALFORMED,
         ] as $json => $reason) {

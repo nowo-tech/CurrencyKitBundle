@@ -86,9 +86,9 @@ final class ApplicationUnitTest extends TestCase
         self::assertGreaterThan(count($active), count($all));
 
         $cache = new NullResolvedRateCache();
-        $cache->set('k', ['a' => 'b']);
+        $cache->set('k', $cache->version(), ['a' => 'b']);
         $cache->invalidate();
-        self::assertNull($cache->get('k'));
+        self::assertNull($cache->get('k', '0'));
         self::assertTrue($cache->claimOnce('k', 1));
 
         $settings = CurrencyKitSettings::fromConfig(

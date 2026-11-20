@@ -10,6 +10,7 @@ use Nowo\CurrencyKitBundle\Application\CurrencyConverterInterface;
 use Nowo\CurrencyKitBundle\Domain\Conversion\ConversionOptions;
 use Nowo\CurrencyKitBundle\Domain\Conversion\ConvertedAmount;
 use Nowo\CurrencyKitBundle\Domain\Exception\CurrencyKitException;
+use Nowo\CurrencyKitBundle\Domain\Money\Decimal;
 use Nowo\CurrencyKitBundle\Domain\Money\Money;
 use Nowo\CurrencyKitBundle\Domain\Rate\RateDate;
 use NumberFormatter;
@@ -163,6 +164,10 @@ final class ReferenceMoneyExtension extends AbstractExtension
      */
     private function format(ConvertedAmount $converted, ?int $scale): string
     {
+        // NumberFormatter takes a float: beyond 15 significant digits the plain decimal is printed instead (audit VR-6).
+        if (Decimal::significantDigits($converted->amount->amount) > 15) {
+            return $converted->amount->amount . ' ' . $converted->amount->currency->code;
+        }
         $formatter = new NumberFormatter($this->locale(), NumberFormatter::CURRENCY);
         $digits    = $scale ?? $converted->amount->currency->minorUnits();
         $formatter->setAttribute(NumberFormatter::MIN_FRACTION_DIGITS, $digits);

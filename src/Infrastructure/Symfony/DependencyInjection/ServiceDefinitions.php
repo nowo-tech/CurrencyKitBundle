@@ -246,7 +246,7 @@ final class ServiceDefinitions
         }
         Requirement::check(interface_exists(ScheduleProviderInterface::class), 'nowo_currency_kit.scheduler.enabled needs symfony/scheduler (and dragonmantank/cron-expression).');
         $container->setDefinition(CurrencyKitScheduleProvider::class, (new Definition(CurrencyKitScheduleProvider::class))
-            ->setArguments([new Reference(ReferenceRateReaderInterface::class), $times, $catchUp])
+            ->setArguments([new Reference(ReferenceRateReaderInterface::class), new Reference(CurrencyKitSettings::class), $times, $catchUp])
             ->addTag('scheduler.schedule_provider', ['name' => CurrencyKitScheduleProvider::NAME]));
     }
 

@@ -43,7 +43,7 @@ final class TestKernel extends Kernel
     /**
      * @param array<string, mixed> $bundleConfig `nowo_currency_kit` configuration
      * @param array<string, bool> $features twig, security, transaction_doctrine, messenger, scheduler
-     * @param 'ddd'|'standard' $host
+     * @param 'ddd'|'named'|'standard' $host
      */
     public function __construct(
         private readonly array $bundleConfig = [],
@@ -127,6 +127,9 @@ final class TestKernel extends Kernel
                     'currency' => ['connection' => 'currency'],
                 ]],
             ]);
+        } elseif ($this->host === 'named') {
+            // The default entity manager is not called "default" (audit VR-10).
+            $container->extension('doctrine', ['dbal' => ['url' => $url], 'orm' => ['default_entity_manager' => 'main', 'entity_managers' => ['main' => ['connection' => 'default']]]]);
         } else {
             $container->extension('doctrine', ['dbal' => ['url' => $url], 'orm' => ['entity_managers' => ['default' => ['connection' => 'default']]]]);
         }

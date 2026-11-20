@@ -7,6 +7,7 @@ namespace Nowo\CurrencyKitBundle\Application;
 use Nowo\CurrencyKitBundle\Domain\Audit\AuditEntry;
 use Nowo\CurrencyKitBundle\Domain\Event\ReferenceRateChanged;
 use Nowo\CurrencyKitBundle\Domain\Exception\InvalidValueException;
+use Nowo\CurrencyKitBundle\Domain\Exception\SyncInterruptedException;
 use Nowo\CurrencyKitBundle\Domain\Manual\ActorRef;
 use Nowo\CurrencyKitBundle\Domain\Port\CurrencyKitAuditSinkInterface;
 use Nowo\CurrencyKitBundle\Domain\Port\IdGeneratorInterface;
@@ -16,8 +17,11 @@ use Nowo\CurrencyKitBundle\Domain\Port\WriteRunnerInterface;
 use Nowo\CurrencyKitBundle\Domain\Rate\RateChange;
 use Nowo\CurrencyKitBundle\Domain\Rate\RateDate;
 use Nowo\CurrencyKitBundle\Domain\Rate\SourceKey;
+use Nowo\CurrencyKitBundle\Domain\Sync\SyncOutcome;
+use Nowo\CurrencyKitBundle\Domain\Sync\SyncReport;
 use Psr\Clock\ClockInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
+use Throwable;
 
 /**
  * Maintenance writes (contract sections 6.2, 8.3, 13.2 and 14): apply a kept change, prune old days, verify content
@@ -42,6 +46,7 @@ final readonly class RateMaintenance
         private CurrencyKitSettings $settings,
         private ClockInterface $clock,
         private ?EventDispatcherInterface $dispatcher = null,
+        private int $pruneBatchDays = self::PRUNE_BATCH_DAYS,
     ) {
     }
 
@@ -77,6 +82,7 @@ final readonly class RateMaintenance
      * lookback window of today; never prunes changes or manual rates.
      *
      * @throws InvalidValueException when `$before` is inside `conversion.max_lookback_days` of today
+     * @throws SyncInterruptedException when a batch fails after earlier batches were committed
      *
      * @return int days deleted
      */
@@ -87,10 +93,15 @@ final readonly class RateMaintenance
         }
         $total = 0;
         do {
-            /** @var int $deleted */
-            $deleted = $this->runner->write(fn (): int => $this->store->pruneBefore($source, $before, self::PRUNE_BATCH_DAYS));
+            try {
+                /** @var int $deleted */
+                $deleted = $this->runner->write(fn (): int => $this->store->pruneBefore($source, $before, $this->pruneBatchDays));
+            } catch (Throwable $e) {
+                // Earlier batches are committed: never a blind retry (CONFLICT_002 on a lock conflict; audit VR-11).
+                throw $total > 0 ? new SyncInterruptedException(new SyncReport($source, SyncOutcome::Changed), $e) : $e;
+            }
             $total += $deleted;
-        } while ($deleted === self::PRUNE_BATCH_DAYS);
+        } while ($deleted === $this->pruneBatchDays);
         if ($total > 0) {
             $this->cache->invalidate();
             $this->memo->reset();

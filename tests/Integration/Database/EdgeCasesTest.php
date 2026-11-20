@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nowo\CurrencyKitBundle\Tests\Integration\Database;
 
 use Nowo\CurrencyKitBundle\Application\ManualRateService;
+use Nowo\CurrencyKitBundle\Application\RateMaintenance;
 use Nowo\CurrencyKitBundle\Domain\Currency\CurrencyCode;
 use Nowo\CurrencyKitBundle\Domain\Exception\InvalidValueException;
 use Nowo\CurrencyKitBundle\Domain\Exception\RateSourceResponseException;
@@ -121,6 +122,37 @@ final class EdgeCasesTest extends DatabaseTestCase
         };
         $services = new TestServices($this->connection, new MockClock('2026-11-19 17:00:00', 'Europe/Berlin'), $this->http->client, [], false, lock: $lock);
         self::assertCount(10, $services->synchronizer->sync()->stored, 'the run finishes; the next one is serialised by the store');
+    }
+
+    public function testAPruneFailingAfterACommittedBatchIsAnInterruption(): void
+    {
+        $this->seed('2025-01-01', ['USD' => '1.1']);
+        $this->seed('2025-01-02', ['USD' => '1.1']);
+        $calls   = 0;
+        $runner  = $this->services->runner;
+        $failing = new class($runner, $calls) implements WriteRunnerInterface {
+            public function __construct(private readonly WriteRunnerInterface $inner, private int &$calls)
+            {
+            }
+
+            public function write(callable $work): mixed
+            {
+                if (++$this->calls === 2) {
+                    throw new RuntimeException('lock conflict');
+                }
+
+                return $this->inner->write($work);
+            }
+        };
+        $s           = $this->services;
+        $maintenance = new RateMaintenance($s->store, $failing, new UuidV7IdGenerator(), $s->audit, $s->cache, $s->memo, $s->resolver, $s->settings, $s->clock, null, 1);
+        try {
+            $maintenance->prune(SourceKey::of('ecb'), RateDate::of('2026-01-01'), null);
+            self::fail('no interruption');
+        } catch (SyncInterruptedException $e) {
+            self::assertInstanceOf(RuntimeException::class, $e->getPrevious());
+        }
+        self::assertSame('2025-01-02', $s->reader->latest()?->rateDate->value, 'the first batch stays committed');
     }
 
     public function testHistoryAndFilteredChanges(): void

@@ -120,8 +120,9 @@ interface RateStoreInterface
     public function manualRates(?ManualRateStatus $status, ?string $currency, int $offset, int $limit): array;
 
     /**
-     * Locks the manual rates of a currency (`SELECT … FOR UPDATE`, ordered by id) and returns them. Call inside a
-     * write unit before an overlap check.
+     * Locks the currency (a guard row `manual_<CODE>` that always exists, then its manual rates by id, `SELECT … FOR
+     * UPDATE`) and returns the rates. Call inside a write unit before an overlap check: two writers of the same
+     * currency are serialised even when it has no manual rate yet, under READ COMMITTED as well.
      *
      * @return list<ManualRateView>
      */

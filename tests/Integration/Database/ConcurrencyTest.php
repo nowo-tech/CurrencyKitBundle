@@ -6,6 +6,7 @@ namespace Nowo\CurrencyKitBundle\Tests\Integration\Database;
 
 use Doctrine\DBAL\Connection;
 use Nowo\CurrencyKitBundle\Domain\Currency\CurrencyCode;
+use Nowo\CurrencyKitBundle\Domain\Exception\ManualRateOverlapException;
 use Nowo\CurrencyKitBundle\Domain\Exception\SyncInterruptedException;
 use Nowo\CurrencyKitBundle\Domain\Manual\ManualRateInput;
 use Nowo\CurrencyKitBundle\Domain\Rate\DayRates;
@@ -77,19 +78,25 @@ final class ConcurrencyTest extends DatabaseTestCase
         self::assertEquals(1, $this->other->fetchOne('SELECT 1'), 'the connection is usable afterwards');
     }
 
-    public function testManualOverlapRaceWaitsOnTheCurrencyRows(): void
+    public function testManualOverlapRaceWaitsEvenForTheFirstRateOfACurrency(): void
     {
-        $this->services->manual->create(new ManualRateInput(CurrencyCode::of('USD'), '1.1', RateDate::of('2026-11-20'), RateDate::of('2026-11-30'), 'First window'));
+        // No manual rate exists yet: the guard row serialises the overlap check under READ COMMITTED too (audit VR-1).
         $this->connection->beginTransaction();
-        $this->services->store->lockManualRates('USD');
+        self::assertSame([], $this->services->store->lockManualRates('USD'));
         try {
             $this->second->manual->create(new ManualRateInput(CurrencyCode::of('USD'), '1.1', RateDate::of('2026-12-01'), null, 'Racing window'));
-            self::fail('did not wait');
+            self::fail('the second writer did not wait');
         } catch (Throwable $e) {
             self::assertInstanceOf(ConcurrencyConflict::class, $e);
         }
-        $this->connection->rollBack();
-        self::assertSame('1.1', $this->second->manual->create(new ManualRateInput(CurrencyCode::of('USD'), '1.1', RateDate::of('2026-12-01'), null, 'Racing window'))->rate);
+        $this->services->manual->create(new ManualRateInput(CurrencyCode::of('USD'), '1.1', RateDate::of('2026-11-25'), null, 'First window'));
+        $this->connection->commit();
+        try {
+            $this->second->manual->create(new ManualRateInput(CurrencyCode::of('USD'), '1.1', RateDate::of('2026-12-01'), null, 'Racing window'));
+            self::fail('two overlapping manual rates');
+        } catch (ManualRateOverlapException) {
+        }
+        self::assertCount(1, $this->second->manual->list());
     }
 
     public function testCommittedThenConflictIsConflict002(): void

@@ -99,7 +99,7 @@ final readonly class CommandSupport
     {
         $committed = false;
         if ($e instanceof SyncInterruptedException) {
-            $io->warning(sprintf('Stored before the failure: %d new day(s), %d changed day(s). They stay stored.', count($e->report->stored), count($e->report->changed)));
+            $io->warning(sprintf('Part of the work was committed before the failure (%d new day(s), %d changed day(s)); it stays. Read again before repeating.', count($e->report->stored), count($e->report->changed)));
             $committed = true;
             $e         = $e->getPrevious() ?? $e;
         }

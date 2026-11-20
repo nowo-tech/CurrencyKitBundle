@@ -35,7 +35,7 @@ abstract class KernelTestCase extends TestCase
     /**
      * @param array<string, mixed> $config
      * @param array<string, bool> $features
-     * @param 'ddd'|'standard' $host
+     * @param 'ddd'|'named'|'standard' $host
      */
     protected function boot(array $config = [], array $features = [], string $host = 'standard', bool $schema = true, string $now = '2026-11-19 17:00:00'): ContainerInterface
     {

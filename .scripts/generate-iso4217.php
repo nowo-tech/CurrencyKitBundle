@@ -19,9 +19,12 @@ declare(strict_types=1);
  */
 
 /** Refused X-codes (precious metals, SDR and units of account, test and "no currency" codes; contract QC-5). */
-const REFUSED_X_CODES = ['XAU', 'XAG', 'XPT', 'XPD', 'XDR', 'XSU', 'XUA', 'XBA', 'XBB', 'XBC', 'XBD', 'XTS', 'XXX'];
+const REFUSED_X_CODES = ['XAU', 'XAG', 'XPT', 'XPD', 'XDR', 'XSU', 'XUA', 'XBA', 'XBB', 'XBC', 'XBD', 'XTS', 'XXX', 'XEU', 'XFO', 'XFU', 'XRE', 'XAD'];
 
 const HISTORIC_MINOR_UNITS = [
+    'BYR' => 0,
+    'ECS' => 0,
+    'MGF' => 0,
     'ADP' => 0,
     'BEF' => 0,
     'ESP' => 0,
@@ -98,15 +101,17 @@ foreach ($current['rows'] as $row) {
 }
 foreach ($historic['rows'] as $row) {
     $code = $row['Ccy'] ?? '';
-    if (preg_match('/^[A-Z]{3}$/', $code) !== 1 || in_array($code, REFUSED_X_CODES, true) || isset($table[$code])) {
+    // A current code always wins over its historic entries.
+    if (preg_match('/^[A-Z]{3}$/', $code) !== 1 || in_array($code, REFUSED_X_CODES, true) || ($table[$code][2] ?? false)) {
         continue;
     }
     $withdrawn = $row['WthdrwlDt'] ?? '';
     if (preg_match('/^(\d{4})-(\d{2})$/', $withdrawn, $m) !== 1 || (int) $m[1] < 1999) {
         continue;
     }
+    // A code listed several times (withdrawn in several countries) keeps its latest withdrawal (HRK: 2023-01).
     $previous = $table[$code][3] ?? null;
-    if ($previous !== null && strcmp($previous, $withdrawn) > 0) {
+    if ($previous !== null && strcmp($previous, $withdrawn) >= 0) {
         continue;
     }
     $table[$code] = [(int) ($row['CcyNbr'] ?? 0), HISTORIC_MINOR_UNITS[$code] ?? 2, false, $withdrawn];

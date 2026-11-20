@@ -61,7 +61,13 @@ final class ReferenceMoneyExtensionTest extends TestCase
                 }
                 $to = CurrencyCode::of((string) $target);
 
-                return new ConvertedAmount(Money::of('11.19', CurrencyCode::of('USD')), Money::of($options?->scale === 4 ? '12.3046' : '12.3', $to), '12.304600000000', '1.1', RateDate::of('2026-11-19'), RateDate::of('2026-11-19'), new SourceKey($this->manualId === null ? 'ecb' : 'manual'), new SourceLabel($this->label), $this->stale, $this->manualId, []);
+                $amount = match (true) {
+                    $options?->scale === 4 => '12.3046',
+                    $this->label === 'BIG' => '123456789012345.67',
+                    default                => '12.3',
+                };
+
+                return new ConvertedAmount(Money::of('11.19', CurrencyCode::of('USD')), Money::of($amount, $to), '12.304600000000', '1.1', RateDate::of('2026-11-19'), RateDate::of('2026-11-19'), new SourceKey($this->manualId === null ? 'ecb' : 'manual'), new SourceLabel($this->label), $this->stale, $this->manualId, []);
             }
 
             public function rate(CurrencyCode|string $from, CurrencyCode|string $to, ?DateTimeInterface $on = null, ?ConversionOptions $options = null): ResolvedRate
@@ -148,6 +154,11 @@ final class ReferenceMoneyExtensionTest extends TestCase
         $this->extension($this->converter())->referenceMoney(1230, 'EUR', null, 'USD');
         self::assertSame('1230', $this->call(1)['amount']);
         self::assertSame('Nov 19, 2026', substr($this->extension($this->converter(), 'en', 'note', 'locale', false, false)->referenceMoney('1', 'EUR', null, 'USD'), -13, 12));
+    }
+
+    public function testAmountsBeyondFloatPrecisionArePrintedAsDecimals(): void
+    {
+        self::assertStringStartsWith('≈ 123456789012345.67 EUR (', $this->extension($this->converter('BIG'))->referenceMoney('1', 'EUR', null, 'USD'));
     }
 
     public function testMissingRateModes(): void

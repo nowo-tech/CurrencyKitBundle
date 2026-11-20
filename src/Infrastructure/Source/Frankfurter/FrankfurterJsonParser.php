@@ -108,7 +108,7 @@ final readonly class FrankfurterJsonParser
     }
 
     /**
-     * The shortest decimal string that reads back as the same JSON number (no exponent accepted later).
+     * The shortest decimal string that reads back as the same JSON number, as a plain decimal (no exponent).
      *
      * @throws RateSourceResponseException
      */
@@ -130,6 +130,7 @@ final readonly class FrankfurterJsonParser
             }
         }
 
-        return Decimal::isPlain($text) ? $text : throw new RateSourceResponseException(RateSourceResponseException::REASON_INVALID_VALUE);
+        // %G may print 1.5E+2 for 150.0: brick/math turns it into a plain decimal (audit VR-5).
+        return Decimal::plain($text);
     }
 }

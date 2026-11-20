@@ -8,7 +8,7 @@ use Nowo\CurrencyKitBundle\Domain\Sync\SyncReport;
 use Throwable;
 
 /**
- * A sync, backfill or import failed after it had committed some days (`CURRENCY_013`): the stored days stay stored
+ * A sync, backfill, import or prune failed after it had committed some days or batches (`CURRENCY_013`): the stored days stay stored
  * (each day is complete on its own) and the next run continues. `$report` lists what was committed; the failure is the
  * previous exception (a final lock conflict is answered as `CONFLICT_002`: read again, do not repeat blindly).
  */

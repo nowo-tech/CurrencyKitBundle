@@ -92,6 +92,7 @@ More in [docs/USAGE.md](docs/USAGE.md).
 ## Requirements
 
 - PHP >= 8.2, < 8.6 with `ext-xmlreader`, `ext-libxml`, `ext-json` (`ext-intl` for the Twig filter)
+- MySQL 8.4, MariaDB 11.4 or PostgreSQL 16 (SQLite for development and tests only: it cannot hold full-precision rates)
 - Symfony 7.4, 8.0 or 8.1; Doctrine DBAL 3.8+ / 4, ORM 3, DoctrineBundle 2.8+ / 3
 - `nowo-tech/outbound-url-guard-bundle` ^1.5, `nowo-tech/transaction-doctrine` ^1.7, `brick/math` ^1.0
 - Optional: `symfony/scheduler` + `dragonmantank/cron-expression` (scheduled sync), `symfony/messenger`,

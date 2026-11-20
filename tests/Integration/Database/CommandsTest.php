@@ -78,6 +78,7 @@ final class CommandsTest extends KernelTestCase
         $this->http()->overrides = [];
         // @phpstan-ignore-next-line (PHPStan cannot resolve the narrowed expected type after the overrides reset)
         self::assertSame(CommandSupport::EXIT_PERMANENT, $this->exitOf('nowo:currency-kit:rates:sync', ['--feed' => 'weekly']));
+        self::assertSame(CommandSupport::EXIT_PERMANENT, $this->exitOf('nowo:currency-kit:rates:sync', ['--feed' => '90d', '--accept-implausible' => ['USD']]), 'accepting needs --actor'); // @phpstan-ignore-line (same unresolvable narrowing)
         self::assertSame(0, $this->command('nowo:currency-kit:rates:sync', ['--feed' => '90d', '--actor' => 'ops', '--accept-implausible' => ['USD']])->getStatusCode());
         self::assertSame(0, $this->command('nowo:currency-kit:rates:sync', ['--feed' => 'daily', '--source' => 'ecb'])->getStatusCode());
         $sink = $this->container()->get('nowo_currency_kit.audit_sink');

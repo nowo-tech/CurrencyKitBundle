@@ -111,10 +111,14 @@ final readonly class RateResolver
         $stale  = false;
         if ($requested->equals($this->today())) {
             $latest = $this->latestDate($source, $requested);
-            if ($latest instanceof RateDate && $latest->daysUntil($requested) > $this->settings->maxStalenessDays) {
-                $this->stale($source, $latest, $latest->daysUntil($requested), $allowStale);
+            // An outage longer than the lookback: search back from the latest publication (audit VR-2); it is only
+            // stale past max_staleness_days.
+            if ($latest instanceof RateDate && $latest->daysUntil($requested) > $this->settings->maxLookbackDays) {
                 $anchor = $latest;
-                $stale  = true;
+                $stale  = $latest->daysUntil($requested) > $this->settings->maxStalenessDays;
+                if ($stale) {
+                    $this->stale($source, $latest, $latest->daysUntil($requested), $allowStale);
+                }
             }
         }
 
@@ -206,7 +210,8 @@ final readonly class RateResolver
         if ($this->memo->has($key)) {
             return $this->memo->get($key);
         }
-        $cached = $this->cache->get($key);
+        $version = $this->cache->version();
+        $cached  = $this->cache->get($key, $version);
         if ($cached !== null) {
             if (($cached['found'] ?? null) !== '1') {
                 // @igor-ignore - the request memo is cleared at every boundary (RateMemoResetListener, kernel.reset)
@@ -222,7 +227,7 @@ final readonly class RateResolver
         }
         $value = $load();
         // @igor-ignore - shared PSR-6 cache of public data, versioned and TTL-bounded; nothing kept on the service
-        $this->cache->set($key, ($value ?? []) + ['found' => $value === null ? '0' : '1']);
+        $this->cache->set($key, $version, ($value ?? []) + ['found' => $value === null ? '0' : '1']);
         // @igor-ignore - the request memo is cleared at every boundary (RateMemoResetListener, kernel.reset)
         $this->memo->set($key, $value);
 

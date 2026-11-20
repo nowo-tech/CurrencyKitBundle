@@ -57,7 +57,7 @@ final class RatesSyncCommand extends Command
         $this
             ->addOption('source', null, InputOption::VALUE_REQUIRED, 'Source key (default: conversion.source)')
             ->addOption('feed', null, InputOption::VALUE_REQUIRED, 'Force a feed: daily or 90d')
-            ->addOption('accept-implausible', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Accept an implausible change for this currency code (audited)')
+            ->addOption('accept-implausible', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Accept an implausible change for this currency code (audited; needs --actor)')
             ->addOption('actor', null, InputOption::VALUE_REQUIRED, 'Who runs the sync (audit)');
     }
 
@@ -68,7 +68,15 @@ final class RatesSyncCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         try {
-            $actor  = $this->support->actor($input, false);
+            $accept = $input->getOption('accept-implausible');
+            $codes  = [];
+            foreach (is_array($accept) ? $accept : [] as $code) {
+                if (is_string($code)) {
+                    $codes[] = $code;
+                }
+            }
+            // Accepting an implausible change is an audited decision: it needs an actor (audit VR-9).
+            $actor  = $this->support->actor($input, $codes !== []);
             $source = SourceKey::of(CommandSupport::string($input, 'source') ?? $this->settings->activeSource->value);
             $this->guard->assertSync(SyncAccessCheckEvent::ACTION_SYNC, $source->value, AccessChannel::Console, $actor);
             $feed = match (CommandSupport::string($input, 'feed')) {
@@ -77,13 +85,6 @@ final class RatesSyncCommand extends Command
                 '90d'   => FetchFeed::Last90Days,
                 default => throw new InvalidValueException('--feed must be daily or 90d.'),
             };
-            $accept = $input->getOption('accept-implausible');
-            $codes  = [];
-            foreach (is_array($accept) ? $accept : [] as $code) {
-                if (is_string($code)) {
-                    $codes[] = $code;
-                }
-            }
             $report = $this->synchronizer->sync($source, new SyncOptions($feed, $codes, 1 + $this->settings->retries, $actor, $actor instanceof ActorRef));
         } catch (Throwable $e) {
             return CommandSupport::fail($io, $e);
