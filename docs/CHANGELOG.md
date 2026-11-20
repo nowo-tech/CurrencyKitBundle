@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- `SyncReferenceRatesHandler` is registered with `#[AsMessageHandler]` (autoconfigured, REQ-MSG-001) instead of a hand-written `messenger.message_handler` tag; behaviour is unchanged and hosts without `symfony/messenger` still skip the service. A container test asserts the handler tag.
+
 ### Changed
 
 - Docs and repository tooling only (no PHP behaviour change): Cursor rule pack, Engram entry and `.cursorignore`, GitHub Spec Kit scaffold with the `specs/001-baseline` spec and a 159-file code inventory, `docs/ENGRAM.md`, `docs/SPEC-DRIVEN-DEVELOPMENT.md` and `docs/SPEC-KIT.md`, Cursor Agent settings in CONTRIBUTING, tables of contents for CONTRACT and SECURITY, the Flex recipe in INSTALLATION, the canonical README order ("Found this useful?" line, FrankenPHP banner, Code of Conduct link) and a `strip-cursor-coauthor-from-history` Makefile target.

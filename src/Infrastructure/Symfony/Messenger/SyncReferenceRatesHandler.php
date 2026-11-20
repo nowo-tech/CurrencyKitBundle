@@ -12,6 +12,7 @@ use Nowo\CurrencyKitBundle\Domain\Rate\SourceKey;
 use Nowo\CurrencyKitBundle\Domain\Sync\SyncOptions;
 use Nowo\CurrencyKitBundle\Domain\Sync\SyncReport;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\Exception\UnrecoverableMessageHandlingException;
 
 /**
@@ -19,6 +20,7 @@ use Symfony\Component\Messenger\Exception\UnrecoverableMessageHandlingException;
  * and dropped (nothing to retry); a permanent source error is unrecoverable (no transport retry); transient errors
  * and lock conflicts propagate so the transport may retry (the next scheduled run catches up anyway).
  */
+#[AsMessageHandler]
 final readonly class SyncReferenceRatesHandler
 {
     /**
