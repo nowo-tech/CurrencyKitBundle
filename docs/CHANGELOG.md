@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Requires `nowo-tech/transaction-doctrine` ^1.8.1 (fixes GHSA-9wh3-m3m5-jffx and GHSA-65w2-9r4h-848g); the lock updated to v1.8.1.
 - Docs and repository tooling only (no PHP behaviour change): Cursor rule pack, Engram entry and `.cursorignore`, GitHub Spec Kit scaffold with the `specs/001-baseline` spec and a 159-file code inventory, `docs/ENGRAM.md`, `docs/SPEC-DRIVEN-DEVELOPMENT.md` and `docs/SPEC-KIT.md`, Cursor Agent settings in CONTRIBUTING, tables of contents for CONTRACT and SECURITY, the Flex recipe in INSTALLATION, the canonical README order ("Found this useful?" line, FrankenPHP banner, Code of Conduct link) and a `strip-cursor-coauthor-from-history` Makefile target.
 
 ## [0.1.0] - 2026-11-20
