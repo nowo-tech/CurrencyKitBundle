@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-20
+
 ### Added
 
 - 0.1.0 core (contract S1, [docs/CONTRACT.md](CONTRACT.md); owner answers QC-1…15, Beacon answers QB-1…8).
