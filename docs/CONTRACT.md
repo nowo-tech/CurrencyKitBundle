@@ -1,8 +1,71 @@
 # Currency kit bundle (CurrencyKitBundle). Contract v0.1
 
-Status 2026-11-19: **v0.1, design only, awaiting the owner (QC, §24) and Symfony Beacon (QB, §25).** No code, no
-PR, no tag, no Packagist. The repository `nowo-tech/CurrencyKitBundle` (public, MIT) exists and stays empty until the
-answers are recorded (§26). The owner registers the package on Packagist before the first tag.
+Status 2026-11-20: **the design of release 0.1.0**, owner answers recorded (QC, §24 and §26) and Symfony Beacon
+answers (QB, §25). 0.1.0 is tagged and ships slice S1 (core, console, Scheduler bridge, Twig filter); the UiKit admin
+UI (§18) arrives in 0.2.0. Where this text says "design only", read it as the design that the 0.1.0 code implements;
+the behaviour baseline is [`specs/001-baseline/spec.md`](../specs/001-baseline/spec.md).
+
+## Table of contents
+
+- [Summary (10 lines)](#summary-10-lines)
+- [Sources read for this contract](#sources-read-for-this-contract)
+- [0. Findings that shaped the contract](#0-findings-that-shaped-the-contract)
+- [1. Purpose and non-goals](#1-purpose-and-non-goals)
+- [2. Package](#2-package)
+- [3. Shape](#3-shape)
+- [4. Layout and architecture rules](#4-layout-and-architecture-rules)
+- [5. Domain model](#5-domain-model)
+  - [5.1 Currency codes](#51-currency-codes)
+  - [5.2 Money and amounts (decision: decimal strings, not minor units)](#52-money-and-amounts-decision-decimal-strings-not-minor-units)
+  - [5.3 Conversion result](#53-conversion-result)
+  - [5.4 Enums](#54-enums)
+  - [5.5 Exceptions (`Domain\Exception`, base `CurrencyKitException`)](#55-exceptions-domainexception-base-currencykitexception)
+- [6. Storage](#6-storage)
+  - [6.1 Conventions](#61-conventions)
+  - [6.2 Tables](#62-tables)
+- [7. Ports](#7-ports)
+  - [7.1 Rate sources](#71-rate-sources)
+  - [7.2 Outbound fetcher (the only HTTP code)](#72-outbound-fetcher-the-only-http-code)
+  - [7.3 Rate store (Application port, DBAL default)](#73-rate-store-application-port-dbal-default)
+  - [7.4 Other ports](#74-other-ports)
+- [8. Sync algorithm](#8-sync-algorithm)
+  - [8.1 Schedule](#81-schedule)
+  - [8.2 Run](#82-run)
+  - [8.3 Storing one day (write unit, REQ-RUNTIME-003)](#83-storing-one-day-write-unit-req-runtime-003)
+  - [8.4 Backfill and import](#84-backfill-and-import)
+  - [8.5 Validation of a batch (before any write)](#85-validation-of-a-batch-before-any-write)
+- [9. Conversion algorithm](#9-conversion-algorithm)
+  - [9.1 Steps (`CurrencyConverter::convert`)](#91-steps-currencyconverterconvert)
+  - [9.2 Which date, in one table](#92-which-date-in-one-table)
+  - [9.3 Unknown and historic currencies](#93-unknown-and-historic-currencies)
+  - [9.4 Staleness](#94-staleness)
+- [10. Manual rates (overrides) and air-gapped installs](#10-manual-rates-overrides-and-air-gapped-installs)
+- [11. Configuration tree](#11-configuration-tree)
+- [12. Public services, Twig, events, commands](#12-public-services-twig-events-commands)
+  - [12.1 Services](#121-services)
+  - [12.2 Twig (`ReferenceMoneyExtension`, when `twig.enabled`)](#122-twig-referencemoneyextension-when-twigenabled)
+  - [12.3 Events (`Domain\Event`, dispatched after commit, VOs and ids only)](#123-events-domainevent-dispatched-after-commit-vos-and-ids-only)
+  - [12.4 Console](#124-console)
+- [13. Security](#13-security)
+  - [13.1 Admin routes and the house access pattern (REQ-UI-002)](#131-admin-routes-and-the-house-access-pattern-req-ui-002)
+  - [13.2 Rate tampering](#132-rate-tampering)
+  - [13.3 XML and JSON parsing safety](#133-xml-and-json-parsing-safety)
+  - [13.4 Other](#134-other)
+- [14. Privacy](#14-privacy)
+- [15. Concurrency (REQ-RUNTIME-003)](#15-concurrency-req-runtime-003)
+- [16. Worker mode (FrankenPHP, kernel reset false; REQ-RUNTIME-002)](#16-worker-mode-frankenphp-kernel-reset-false-req-runtime-002)
+- [17. Standard vs DDD host (REQ-ARCH-001)](#17-standard-vs-ddd-host-req-arch-001)
+- [18. UI (0.2.0, optional; UiKit + FormKit)](#18-ui-020-optional-uikit--formkit)
+- [19. Testing plan (100 % PHP coverage, PHPStan max, no live network)](#19-testing-plan-100--php-coverage-phpstan-max-no-live-network)
+- [20. Docs set](#20-docs-set)
+- [21. Error and status mapping (UI now; reused by a future API)](#21-error-and-status-mapping-ui-now-reused-by-a-future-api)
+- [22. Versioning and slices](#22-versioning-and-slices)
+- [23. Beacon integration sketch (informative)](#23-beacon-integration-sketch-informative)
+- [24. Owner questions (QC)](#24-owner-questions-qc)
+- [25. Beacon questions (QB)](#25-beacon-questions-qb)
+- [26. Answers](#26-answers)
+  - [26.1 Owner answers (2026-11-19)](#261-owner-answers-2026-11-19)
+  - [26.2 Beacon answers (2026-11-19)](#262-beacon-answers-2026-11-19)
 
 ## Summary (10 lines)
 

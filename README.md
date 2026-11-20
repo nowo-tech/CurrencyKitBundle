@@ -1,6 +1,8 @@
 # Currency Kit Bundle
 
-[![CI](https://github.com/nowo-tech/CurrencyKitBundle/actions/workflows/ci.yml/badge.svg)](https://github.com/nowo-tech/CurrencyKitBundle/actions/workflows/ci.yml) [![Packagist Version](https://img.shields.io/packagist/v/nowo-tech/currency-kit-bundle.svg?style=flat)](https://packagist.org/packages/nowo-tech/currency-kit-bundle) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?logo=php)](https://php.net) [![Symfony](https://img.shields.io/badge/Symfony-7.4%20%7C%208.0%20%7C%208.1%2B-000000?logo=symfony)](https://symfony.com) [![Coverage](https://img.shields.io/badge/Coverage-100%25-brightgreen)](#tests-and-coverage)
+[![CI](https://github.com/nowo-tech/CurrencyKitBundle/actions/workflows/ci.yml/badge.svg)](https://github.com/nowo-tech/CurrencyKitBundle/actions/workflows/ci.yml) [![Packagist Version](https://img.shields.io/packagist/v/nowo-tech/currency-kit-bundle.svg?style=flat)](https://packagist.org/packages/nowo-tech/currency-kit-bundle) [![Packagist Downloads](https://img.shields.io/packagist/dt/nowo-tech/currency-kit-bundle.svg)](https://packagist.org/packages/nowo-tech/currency-kit-bundle) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?logo=php)](https://php.net) [![Symfony](https://img.shields.io/badge/Symfony-7.4%20%7C%208.0%20%7C%208.1%2B-000000?logo=symfony)](https://symfony.com) [![GitHub stars](https://img.shields.io/github/stars/nowo-tech/CurrencyKitBundle.svg?style=social&label=Star)](https://github.com/nowo-tech/CurrencyKitBundle) [![Coverage](https://img.shields.io/badge/Coverage-100%25-brightgreen)](#tests-and-coverage)
+
+> ⭐ **Found this useful?** Install it from [Packagist](https://packagist.org/packages/nowo-tech/currency-kit-bundle) and give it a star on [GitHub](https://github.com/nowo-tech/CurrencyKitBundle): it helps us maintain and improve the project.
 
 > **Reference rates only.** The rates this bundle stores and applies are reference rates published for information
 > purposes. They are not payment, settlement, trading or accounting rates, and every result says so
@@ -16,8 +18,9 @@ written through DBAL, so the bundle never flushes, clears or resets your entity 
 
 > 📋 **Compatible with Symfony 7.4, 8.0 and 8.1** · PHP 8.2+ (Symfony 8.x requires PHP 8.4+)
 
-This bundle is **FrankenPHP worker mode friendly** (kernel kept alive and not reset): services hold configuration
-only; the request memo is cleared at every boundary. See [FRANKENPHP-WORKER-AUDIT.md](docs/FRANKENPHP-WORKER-AUDIT.md).
+![FrankenPHP Friendly Worker Mode](docs/images/frankenphp-friendly.png)
+
+This bundle is **FrankenPHP worker mode friendly**.
 
 ## Features
 
@@ -38,6 +41,8 @@ only; the request memo is cleared at every boundary. See [FRANKENPHP-WORKER-AUDI
   autoescaped, in 10 locales.
 - House access pattern for admin operations: area checker port with a role-based default, `*_ACCESS_CHECK` events,
   deny by default.
+- FrankenPHP worker mode, kernel kept alive and not reset: services hold configuration only and the request memo is
+  cleared at every boundary ([FRANKENPHP-WORKER-AUDIT.md](docs/FRANKENPHP-WORKER-AUDIT.md)).
 - REQ-RUNTIME-003: transaction-doctrine write units, 409 + `Retry-After` semantics (`CONFLICT_001` / `CONFLICT_002`),
   real-database CI on MySQL 8.4, MariaDB 11.4 and PostgreSQL 16.
 
@@ -55,6 +60,15 @@ Create the tables (reference DDL in [docs/INSTALLATION.md](docs/INSTALLATION.md)
 bin/console nowo:currency-kit:rates:sync
 bin/console nowo:currency-kit:convert 100 USD EUR
 ```
+
+## Requirements
+
+- PHP >= 8.2, < 8.6 with `ext-xmlreader`, `ext-libxml`, `ext-json` (`ext-intl` for the Twig filter)
+- MySQL 8.4, MariaDB 11.4 or PostgreSQL 16 (SQLite for development and tests only: it cannot hold full-precision rates)
+- Symfony 7.4, 8.0 or 8.1; Doctrine DBAL 3.8+ / 4, ORM 3, DoctrineBundle 2.8+ / 3
+- `nowo-tech/outbound-url-guard-bundle` ^1.5, `nowo-tech/transaction-doctrine` ^1.7, `brick/math` ^1.0
+- Optional: `symfony/scheduler` + `dragonmantank/cron-expression` (scheduled sync), `symfony/messenger`,
+  `symfony/security-bundle` (role-based checker), `symfony/twig-bundle`
 
 ## Usage
 
@@ -76,27 +90,25 @@ More in [docs/USAGE.md](docs/USAGE.md).
 - [Installation](docs/INSTALLATION.md)
 - [Configuration](docs/CONFIGURATION.md)
 - [Usage](docs/USAGE.md)
+- [Contributing](docs/CONTRIBUTING.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Changelog](docs/CHANGELOG.md)
+- [Upgrading](docs/UPGRADING.md)
+- [Release](docs/RELEASE.md)
+- [Security](docs/SECURITY.md)
+- [Engram](docs/ENGRAM.md)
+- [Spec-driven development](docs/SPEC-DRIVEN-DEVELOPMENT.md)
+- [GitHub Spec Kit](docs/SPEC-KIT.md)
+
+### Additional documentation
+
 - [Data sources](docs/SOURCES.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Concurrency](docs/CONCURRENCY.md)
-- [Security](docs/SECURITY.md)
 - [FrankenPHP worker audit](docs/FRANKENPHP-WORKER-AUDIT.md)
 - [Contract](docs/CONTRACT.md)
-- [Changelog](docs/CHANGELOG.md)
-- [Upgrading](docs/UPGRADING.md)
-- [Contributing](docs/CONTRIBUTING.md)
-- [Release](docs/RELEASE.md)
 - [GitHub Actions CI](docs/GITHUB_CI.md)
 - [PSR evaluation](docs/PSR.md)
-
-## Requirements
-
-- PHP >= 8.2, < 8.6 with `ext-xmlreader`, `ext-libxml`, `ext-json` (`ext-intl` for the Twig filter)
-- MySQL 8.4, MariaDB 11.4 or PostgreSQL 16 (SQLite for development and tests only: it cannot hold full-precision rates)
-- Symfony 7.4, 8.0 or 8.1; Doctrine DBAL 3.8+ / 4, ORM 3, DoctrineBundle 2.8+ / 3
-- `nowo-tech/outbound-url-guard-bundle` ^1.5, `nowo-tech/transaction-doctrine` ^1.7, `brick/math` ^1.0
-- Optional: `symfony/scheduler` + `dragonmantank/cron-expression` (scheduled sync), `symfony/messenger`,
-  `symfony/security-bundle` (role-based checker), `symfony/twig-bundle`
 
 ## Tests and coverage
 

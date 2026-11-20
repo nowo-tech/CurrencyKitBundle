@@ -2,6 +2,14 @@
 
 Reporting: see [../.github/SECURITY.md](../.github/SECURITY.md).
 
+## Table of contents
+
+- [Threat model (0.1)](#threat-model-01)
+- [Console access policy (owner decision)](#console-access-policy-owner-decision)
+- [Runtime settings](#runtime-settings)
+- [Privacy](#privacy)
+- [Residual risks](#residual-risks)
+
 ## Threat model (0.1)
 
 | Threat | Mitigation |
