@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-22
+
+Messenger handler registered with #[AsMessageHandler] (REQ-MSG-001); transaction-doctrine ^1.8.1; docs and tooling
+
 ### Fixed
 
 - `SyncReferenceRatesHandler` is registered with `#[AsMessageHandler]` (autoconfigured, REQ-MSG-001) instead of a hand-written `messenger.message_handler` tag; behaviour is unchanged and hosts without `symfony/messenger` still skip the service. A container test asserts the handler tag.
