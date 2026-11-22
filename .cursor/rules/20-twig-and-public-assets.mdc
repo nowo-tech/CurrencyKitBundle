@@ -1,0 +1,18 @@
+---
+description: Twig templates and public bundle assets (not applicable to this package)
+globs:
+  - "templates/**/*.twig"
+  - "src/**/Resources/views/**/*.twig"
+  - "src/Resources/public/**/*"
+alwaysApply: false
+---
+
+This package ships no Twig templates and no public assets, so the usual Twig and asset rules are N/A here.
+
+Do not:
+- add a Twig template, a form theme or a file under `src/Resources/public/` without first opening a spec for it
+  (a UI belongs in the host or in a UI bundle that builds on the public services of this package)
+- add Twig or asset dependencies to `composer.json`
+
+If a template or asset is ever added, copy the Twig and public-assets rule from a sibling bundle (small,
+backward-compatible changes, no edits to generated `src/Resources/public/build`) and update this file.
