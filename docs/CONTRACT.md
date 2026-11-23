@@ -1,5 +1,7 @@
 # Currency kit bundle (CurrencyKitBundle). Contract v0.1
 
+Status 2026-11-23: **0.1.0 and 0.1.1 are released** (slice S1; 0.1.1 is a patch); S2, the UiKit admin UI of 0.2.0, is not
+started (see [ROADMAP.md](ROADMAP.md)).
 Status 2026-11-20: **the design of release 0.1.0**, owner answers recorded (QC, §24 and §26) and Symfony Beacon
 answers (QB, §25). 0.1.0 is tagged and ships slice S1 (core, console, Scheduler bridge, Twig filter); the UiKit admin
 UI (§18) arrives in 0.2.0. Where this text says "design only", read it as the design that the 0.1.0 code implements;
