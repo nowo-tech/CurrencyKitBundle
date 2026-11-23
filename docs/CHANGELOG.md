@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Documentation
+
+- USAGE: Messenger transport, retries and failure transport of `SyncReferenceRatesMessage` (REQ-MSG-001): in-handler attempts, unrecoverable source responses, transient errors left to the transport's `retry_strategy` and `failure_transport`, idempotent redelivery.
+
 ## [0.1.1] - 2026-11-22
 
 Messenger handler registered with #[AsMessageHandler] (REQ-MSG-001); transaction-doctrine ^1.8.1; docs and tooling
