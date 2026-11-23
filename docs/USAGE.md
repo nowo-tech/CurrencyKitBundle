@@ -7,6 +7,7 @@
 - [Errors](#errors)
 - [Twig](#twig)
 - [Keeping rates current](#keeping-rates-current)
+  - [Messenger: transport, retries and failure transport](#messenger-transport-retries-and-failure-transport)
 - [Manual rates](#manual-rates)
 - [Air-gapped installs](#air-gapped-installs)
 - [A custom source](#a-custom-source)
@@ -142,6 +143,44 @@ older than `max_staleness_days` (for health checks).
 
 Older days: `bin/console nowo:currency-kit:rates:backfill --from=2020-01-01 --actor=ops` (full-history file;
 resumable; never automatic).
+
+### Messenger: transport, retries and failure transport
+
+`SyncReferenceRatesHandler` is registered through `#[AsMessageHandler]` (autoconfiguration; nothing to tag by hand) and
+handles `SyncReferenceRatesMessage`, which carries only the source key (no amounts, no secrets).
+
+- **Transport.** The Scheduler bridge delivers the message on `scheduler_nowo_currency_kit` and the handler runs in that
+  consumer. A host that dispatches the message itself handles it synchronously unless it routes the class to an async
+  transport:
+
+  ```yaml
+  # config/packages/messenger.yaml
+  framework:
+      messenger:
+          failure_transport: failed
+          transports:
+              async:
+                  dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                  retry_strategy: { max_retries: 3, delay: 60000, multiplier: 2 }
+              failed: 'doctrine://default?queue_name=failed'
+          routing:
+              'Nowo\CurrencyKitBundle\Infrastructure\Symfony\Messenger\SyncReferenceRatesMessage': async
+  ```
+
+- **Retries inside the handler.** One delivery makes up to `1 + outbound.retries` attempts against the source
+  ([CONFIGURATION.md](CONFIGURATION.md)), the same as `nowo:currency-kit:rates:sync`.
+- **Outbound disabled** (`outbound.enabled: false`): a notice is logged and the message is acknowledged; nothing is
+  retried.
+- **Unusable source response** (a client error, or a document that is too large, malformed or implausible): the handler throws
+  `UnrecoverableMessageHandlingException`, so the transport does not retry it; with a `failure_transport` the message
+  lands there for inspection.
+- **Transient errors** (source unreachable, final lock conflict) propagate: an async transport applies its
+  `retry_strategy` and, once exhausted, moves the message to the `failure_transport` (`messenger:failed:retry`
+  re-delivers it). The scheduler transport does not re-queue a failed message; the next slot of the schedule (and the
+  08:00 catch-up) is the retry.
+- **Idempotent.** Days are stored insert-or-ignore on the unique `(source, rate_date, currency)` key, so a redelivered or
+  duplicated message stores nothing twice ([CONCURRENCY.md](CONCURRENCY.md)). The handler keeps no state between
+  messages (safe in FrankenPHP worker mode with the kernel reset off).
 
 ## Manual rates
 
