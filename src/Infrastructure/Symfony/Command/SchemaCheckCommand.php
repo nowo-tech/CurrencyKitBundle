@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\CurrencyKitBundle\Infrastructure\Symfony\Command;
 
-use Nowo\CurrencyKitBundle\Infrastructure\Doctrine\SchemaChecker;
+use Nowo\CurrencyKitBundle\Application\SchemaCheckerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -22,7 +22,7 @@ final class SchemaCheckCommand extends Command
     /**
      * Builds the command.
      */
-    public function __construct(private readonly SchemaChecker $checker)
+    public function __construct(private readonly SchemaCheckerInterface $checker)
     {
         parent::__construct();
     }
