@@ -11,6 +11,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - USAGE: Messenger transport, retries and failure transport of `SyncReferenceRatesMessage` (REQ-MSG-001): in-handler attempts, unrecoverable source responses, transient errors left to the transport's `retry_strategy` and `failure_transport`, idempotent redelivery.
 
+### Internal
+
+- **Deptrac layer check** (REQ-ARCH-002): `deptrac.yaml` with a strict ruleset (Domain / Application framework-free
+  apart from `brick/math` behind `Domain\Money\Decimal`, no skipped violations, uncovered dependencies and unassigned
+  classes fail), `composer deptrac`, `make deptrac`, part of `make release-check` and of the PHPStan CI job.
+- Layer fix, behaviour unchanged: the schema-check command takes the new `Application\SchemaCheckerInterface`, which
+  `Infrastructure\Doctrine\SchemaChecker` implements.
+
 ## [0.1.1] - 2026-11-22
 
 Messenger handler registered with #[AsMessageHandler] (REQ-MSG-001); transaction-doctrine ^1.8.1; docs and tooling

@@ -20,7 +20,7 @@ expected to uphold it. Please report unacceptable behavior to **hectorfranco@now
 1. Clone the repository.
 2. Start the dev container: `make up` then `make install`.
 3. Run the checks: `make test`, `make test-coverage-100`, `make test-with-db` (MySQL 8.4, MariaDB 11.4 and
-   PostgreSQL 16 services, profile `db`), `make cs-check`, `make phpstan`, `make validate-phpdoc`, `make igor`,
+   PostgreSQL 16 services, profile `db`), `make cs-check`, `make phpstan`, `make deptrac`, `make validate-phpdoc`, `make igor`,
    `make validate-translations`.
 4. Pre-release: `make release-check`.
 
@@ -28,6 +28,7 @@ expected to uphold it. Please report unacceptable behavior to **hectorfranco@now
 
 - PHP-CS-Fixer (PSR-12 + Symfony): `make cs-fix` / `make cs-check`.
 - PHPStan level max with the `nowo-tech/phpstan-frankenphp` rulesets (classic, worker-strict, hardening).
+- Deptrac layer check (REQ-ARCH-002): `make deptrac` / `composer deptrac`; see [ARCHITECTURE.md](ARCHITECTURE.md#architecture-checks).
 - PHPDoc and Markdown docs in **English**. Strict types in every PHP file.
 - No float anywhere on the money path: amounts and rates are decimal strings.
 

@@ -39,3 +39,19 @@ manager + XML mapping + a custom checker).
 Every write is a transaction-doctrine write unit around one DBAL transaction on the configured manager's connection
 (see [CONCURRENCY.md](CONCURRENCY.md)). The write unit is given a registry that holds that connection and no entity
 manager, so a replay rolls back the connection only and never clears, resets or flushes any entity manager.
+
+## Architecture checks
+
+[Deptrac](https://github.com/deptrac/deptrac) checks the dependencies between the layers on every CI run (REQ-ARCH-002; `deptrac.yaml`, `composer deptrac` / `make deptrac`, part of `make release-check` and of the PHPStan CI job). A violation, a dependency on an unlisted vendor namespace or a class under `src/` that belongs to no layer fails the build.
+
+| Deptrac layer | Namespaces | May depend on |
+| --- | --- | --- |
+| `Domain` | `Domain` | itself, `psr/clock`, `psr/log`, `psr/event-dispatcher`, `nowo-tech/transaction-contract`, `brick/math` (inside `Domain\Money\Decimal` only) |
+| `Application` | `Application` | `Domain` and the same packages |
+| `Infrastructure` | `Infrastructure` except the edge and DI below | `Domain`, `Application`, Symfony, Doctrine, Twig, PSR-6 cache, transaction-doctrine, OutboundUrlGuard |
+| `UI` | `Infrastructure\Symfony\{Command, Security, Event, Twig}` (console, access guard and its events, Twig extension) | `Domain`, `Application`, Symfony, Twig, transaction-doctrine |
+| `Bridge` | `Bridge\Scheduler` | `Domain`, `Application`, `Infrastructure`, Symfony |
+| `DependencyInjection` | `Infrastructure\Symfony\DependencyInjection`, the bundle class | every layer (composition root) |
+
+Besides `tests/Architecture`, the schema-check command depends on the port `Application\SchemaCheckerInterface`
+(implemented by `Infrastructure\Doctrine\SchemaChecker`). No violation is skipped.

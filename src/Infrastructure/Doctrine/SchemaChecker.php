@@ -8,6 +8,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Tools\SchemaTool;
+use Nowo\CurrencyKitBundle\Application\SchemaCheckerInterface;
 
 use function array_values;
 use function str_starts_with;
@@ -16,7 +17,7 @@ use function str_starts_with;
  * Compares the live tables with the bundle's mapping (contract section 6.1): columns, types, collations and indexes.
  * Reads metadata and the database schema only; never flushes, clears or resets the entity manager.
  */
-final readonly class SchemaChecker
+final readonly class SchemaChecker implements SchemaCheckerInterface
 {
     /** Namespace of the bundle's entities. */
     private const ENTITY_NAMESPACE = 'Nowo\\CurrencyKitBundle\\Infrastructure\\Doctrine\\Entity\\';
@@ -29,9 +30,7 @@ final readonly class SchemaChecker
     }
 
     /**
-     * The SQL that would align the live tables with the mapping (empty: in sync).
-     *
-     * @return list<string>
+     * {@inheritDoc}
      */
     public function diff(): array
     {

@@ -21,6 +21,7 @@
 /docker-compose.yml export-ignore
 /igor.json export-ignore
 /phpstan.neon.dist export-ignore
+/deptrac.yaml export-ignore
 /phpunit.xml.dist export-ignore
 /rector.php export-ignore
 /specs export-ignore

@@ -1,0 +1,151 @@
+# REQ-ARCH-002: layer dependencies of src/ checked by Deptrac (strict ruleset; skipped violations only for public API
+# that cannot change before the next major, each with its reason below).
+# Run: composer deptrac / make deptrac. Layers follow REQ-ARCH-001; docs/ARCHITECTURE.md explains them.
+deptrac:
+  paths:
+    - ./src
+  exclude_files:
+    - '#.*/src/Resources/.*#'
+  layers:
+    # --- Bundle layers -------------------------------------------------------------------------------------------
+    - name: Domain
+      collectors:
+        - type: classLike
+          value: '^Nowo\\CurrencyKitBundle\\Domain\\'
+    - name: Application
+      collectors:
+        - type: classLike
+          value: '^Nowo\\CurrencyKitBundle\\Application\\'
+    # UI: the console / security / Twig edge inside Infrastructure\Symfony (not re-laid out): commands, the access
+    # guard with its checkers, permissions and access-check events, the Twig extension.
+    - name: UI
+      collectors:
+        - type: classLike
+          value: '^Nowo\\CurrencyKitBundle\\Infrastructure\\Symfony\\(Command|Security|Event|Twig)\\'
+    # DependencyInjection: the composition root (bundle class, extension tree, service definitions, compiler passes).
+    - name: DependencyInjection
+      collectors:
+        - type: classLike
+          value: '^Nowo\\CurrencyKitBundle\\(Infrastructure\\Symfony\\DependencyInjection\\|NowoCurrencyKitBundle$)'
+    # Infrastructure: DBAL / Doctrine stores, rate sources, HTTP fetcher, cache, Messenger, id generator, audit sink.
+    - name: Infrastructure
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: '^Nowo\\CurrencyKitBundle\\Infrastructure\\'
+          must_not:
+            - type: classLike
+              value: '^Nowo\\CurrencyKitBundle\\Infrastructure\\Symfony\\(Command|Security|Event|Twig|DependencyInjection)\\'
+    - name: Bridge
+      collectors:
+        - type: classLike
+          value: '^Nowo\\CurrencyKitBundle\\Bridge\\'
+    # --- Vendor layers -------------------------------------------------------------------------------------------
+    # Framework-free contract packages, listed by name (Domain and Application may use them).
+    - name: Psr
+      collectors:
+        - type: classLike
+          value: '^Psr\\(Clock|Log|EventDispatcher)\\'
+    - name: TransactionContract
+      collectors:
+        - type: classLike
+          value: '^Nowo\\TransactionContract\\'
+    # brick/math: the arbitrary-precision decimal behind Domain\Money\Decimal (framework-free value library).
+    - name: BrickMath
+      collectors:
+        - type: classLike
+          value: '^Brick\\Math\\'
+    # Framework and library code: Infrastructure, UI, Bridge and DependencyInjection only.
+    - name: PsrCache
+      collectors:
+        - type: classLike
+          value: '^Psr\\Cache\\'
+    - name: SymfonyContracts
+      collectors:
+        - type: classLike
+          value: '^Symfony\\Contracts\\'
+    - name: Symfony
+      collectors:
+        - type: classLike
+          value: '^Symfony\\(Component|Bundle|Bridge)\\'
+    - name: Doctrine
+      collectors:
+        - type: classLike
+          value: '^Doctrine\\'
+    - name: Twig
+      collectors:
+        - type: classLike
+          value: '^Twig\\'
+    - name: Composer
+      collectors:
+        - type: classLike
+          value: '^Composer\\'
+    - name: TransactionDoctrine          # NOT framework-free (ConflictCode imports HttpFoundation / Messenger)
+      collectors:
+        - type: classLike
+          value: '^Nowo\\TransactionDoctrine\\'
+    - name: OutboundUrlGuard
+      collectors:
+        - type: classLike
+          value: '^Nowo\\OutboundUrlGuardBundle\\'
+  ruleset:
+    Domain:
+      - Psr
+      - TransactionContract
+      - BrickMath
+    Application:
+      - Domain
+      - Psr
+      - TransactionContract
+      - BrickMath
+    Infrastructure:
+      - Domain
+      - Application
+      - Psr
+      - PsrCache
+      - TransactionContract
+      - BrickMath
+      - SymfonyContracts
+      - Symfony
+      - Doctrine
+      - Twig
+      - Composer
+      - TransactionDoctrine
+      - OutboundUrlGuard
+    UI:
+      - Domain
+      - Application
+      - Psr
+      - TransactionContract
+      - BrickMath
+      - SymfonyContracts
+      - Symfony
+      - Twig
+      - TransactionDoctrine
+    Bridge:
+      - Domain
+      - Application
+      - Infrastructure
+      - Psr
+      - TransactionContract
+      - SymfonyContracts
+      - Symfony
+    DependencyInjection:
+      - Domain
+      - Application
+      - Infrastructure
+      - UI
+      - Bridge
+      - Psr
+      - PsrCache
+      - TransactionContract
+      - BrickMath
+      - SymfonyContracts
+      - Symfony
+      - Doctrine
+      - Twig
+      - Composer
+      - TransactionDoctrine
+      - OutboundUrlGuard
+  skip_violations: {}
